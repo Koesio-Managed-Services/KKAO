@@ -1,0 +1,20 @@
+{
+  "id": "kalepin",
+  "name": "Kalepin",
+  "aliases": ["papernotes"],
+  "publisher": "Koesio",
+  "summary": "Vos idées notées en deux secondes",
+  "description": "Une note rapide part dans votre Paper Dropbox, rangée sous la date du jour. Et des post-it sur le bureau pour ne rien oublier. Au premier lancement, un guide vous fait créer votre application Dropbox en deux minutes, pas à pas.",
+  "highlights": ["Note au raccourci", "Classée par jour", "Post-it sur le bureau", "Jamais de note perdue"],
+  "source": "..\\..\\..\\Kalepin",
+  "version": "exe:dist\\Kalepin.exe",
+  "include": ["dist\\Kalepin.exe", "dist\\Kalepin.exe.config", "assets\\icon.png"],
+  "iconStandIn": "postit",
+  "app": {
+    "exe": "dist\\Kalepin.exe",
+    "args": [],
+    "icon": "assets\\icon.png",
+    "protocol": true,
+    "autostart": false
+  }
+}

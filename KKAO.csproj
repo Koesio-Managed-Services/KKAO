@@ -1,0 +1,49 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <!-- .NET Framework 4.8 : present sur tout Windows 10/11, aucun runtime a installer -->
+    <TargetFramework>net48</TargetFramework>
+    <!-- Icone de la zone de notification + menu : WinForms ; fenetres (accueil, applis, reglages, guide) : WPF -->
+    <UseWindowsForms>true</UseWindowsForms>
+    <UseWPF>true</UseWPF>
+    <LangVersion>latest</LangVersion>
+    <AssemblyName>KKAO</AssemblyName>
+    <RootNamespace>KKAO</RootNamespace>
+    <Product>KKAO</Product>
+    <Company>Koesio</Company>
+    <Description>KMS Kaisse A Outils : toutes les applis Koesio sous une seule icone</Description>
+    <Version>2.1.0</Version>
+    <DebugType>embedded</DebugType>
+    <PlatformTarget>AnyCPU</PlatformTarget>
+    <Prefer32Bit>false</Prefer32Bit>
+    <!-- DPI systeme : icone nette a 125 / 150 % -->
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+    <!-- Genere une fois par "KKAO.exe /export-icon assets\kkao.ico" (option a deux tirets ; meme dessin que l'icone de la zone de notification) -->
+    <ApplicationIcon Condition="Exists('assets\kkao.ico')">assets\kkao.ico</ApplicationIcon>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- JSON : JavaScriptSerializer (System.Web.Extensions) ; System.Web evite l'erreur MC1000 du compilateur XAML -->
+    <Reference Include="System.Web" />
+    <Reference Include="System.Web.Extensions" />
+    <!-- Paquets d'applis (zip) -->
+    <Reference Include="System.IO.Compression" />
+    <Reference Include="System.IO.Compression.FileSystem" />
+    <!-- Clavier des fenetres WPF ouvertes depuis la boucle WinForms -->
+    <Reference Include="WindowsFormsIntegration" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Resource Include="assets\koesio-logo.jpg" />
+    <Resource Include="assets\kkao.ico" Condition="Exists('assets\kkao.ico')" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Sorties de l'assemblage du paquet a partager : jamais compilees -->
+    <Compile Remove="out\**" />
+    <None Remove="out\**" />
+    <Page Remove="out\**" />
+  </ItemGroup>
+
+</Project>

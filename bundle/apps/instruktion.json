@@ -1,0 +1,31 @@
+{
+  "id": "instruktion",
+  "name": "InstruKtion",
+  "aliases": ["procedurier"],
+  "publisher": "Koesio",
+  "summary": "Vos procédures en un temps record",
+  "description": "Captures annotées, vidéo, chapitres et export HTML ou IT Glue en un clic, sans quitter votre écran.",
+  "highlights": ["Capture en un raccourci", "Flèches, numéros, annotations", "Floutage des zones sensibles", "Export IT Glue"],
+  "source": "..\\..\\..\\Procedurier",
+  "version": "package.json",
+  "include": [
+    "package.json",
+    "README.md",
+    "src",
+    "assets",
+    "docs",
+    "mcp",
+    "node_modules\\koffi",
+    "node_modules\\@koromix\\koffi-win32-x64",
+    "node_modules\\electron\\dist"
+  ],
+  "exclude": ["node_modules\\electron\\dist\\locales\\*.pak"],
+  "keep": ["node_modules\\electron\\dist\\locales\\fr.pak", "node_modules\\electron\\dist\\locales\\en-US.pak"],
+  "app": {
+    "exe": "node_modules\\electron\\dist\\electron.exe",
+    "args": ["."],
+    "icon": "assets\\icon.png",
+    "protocol": true,
+    "autostart": false
+  }
+}

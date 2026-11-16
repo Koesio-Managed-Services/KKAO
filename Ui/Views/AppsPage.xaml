@@ -1,0 +1,111 @@
+<UserControl x:Class="KKAO.Ui.AppsPage"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:ui="clr-namespace:KKAO.Ui">
+    <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Focusable="False">
+        <StackPanel Margin="36,30,36,36" MaxWidth="1120">
+            <DockPanel>
+                <Button DockPanel.Dock="Right" Style="{StaticResource BtnPrimary}" Content="Tout installer" ui:Btn.Glyph="&#xE896;" VerticalAlignment="Top"
+                        Command="{Binding InstallAllCommand}" Visibility="{Binding CanInstallSome, Converter={StaticResource BoolToVis}}" />
+                <StackPanel>
+                    <TextBlock Text="Applications" Style="{StaticResource H1}" />
+                    <TextBlock Style="{StaticResource Muted}" Margin="0,6,0,0" MaxWidth="700" HorizontalAlignment="Left">
+                        <Run Text="Les applis Koesio livrées avec " /><Run Text="{x:Static ui:Brand.Name}" /><Run Text=". Installez-les d'un clic : pour vous seul, sans droits administrateur, et elles se désinstallent proprement." />
+                    </TextBlock>
+                </StackPanel>
+            </DockPanel>
+
+            <WrapPanel Margin="0,22,0,18">
+                <RadioButton Style="{StaticResource Segment}" GroupName="appsFilter" Command="{Binding FilterCommand}" CommandParameter="all"
+                             IsChecked="{Binding AppsFilter, Mode=OneWay, Converter={StaticResource EqualsToBool}, ConverterParameter=all}">
+                    <TextBlock><Run Text="Toutes  " /><Run Text="{Binding AllCount, Mode=OneWay}" /></TextBlock>
+                </RadioButton>
+                <RadioButton Style="{StaticResource Segment}" GroupName="appsFilter" Command="{Binding FilterCommand}" CommandParameter="installed"
+                             IsChecked="{Binding AppsFilter, Mode=OneWay, Converter={StaticResource EqualsToBool}, ConverterParameter=installed}">
+                    <TextBlock><Run Text="Installées  " /><Run Text="{Binding InstalledCount, Mode=OneWay}" /></TextBlock>
+                </RadioButton>
+                <RadioButton Style="{StaticResource Segment}" GroupName="appsFilter" Command="{Binding FilterCommand}" CommandParameter="available"
+                             IsChecked="{Binding AppsFilter, Mode=OneWay, Converter={StaticResource EqualsToBool}, ConverterParameter=available}">
+                    <TextBlock><Run Text="Disponibles  " /><Run Text="{Binding AvailableCount, Mode=OneWay}" /></TextBlock>
+                </RadioButton>
+            </WrapPanel>
+
+            <TextBlock Style="{StaticResource Muted}" Text="Rien à afficher ici." Margin="2,0,0,0"
+                       Visibility="{Binding FilteredApps.Count, Converter={StaticResource HasValueToVis}, ConverterParameter=invert}" />
+
+            <ItemsControl ItemsSource="{Binding FilteredApps}" Focusable="False">
+                <ItemsControl.ItemsPanel>
+                    <ItemsPanelTemplate>
+                        <WrapPanel />
+                    </ItemsPanelTemplate>
+                </ItemsControl.ItemsPanel>
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                        <Border Style="{StaticResource Card}" Width="350" Margin="0,0,18,18" Padding="22" Cursor="Hand">
+                            <Border.InputBindings>
+                                <MouseBinding MouseAction="LeftClick" Command="{Binding ShowDetailCommand}" />
+                            </Border.InputBindings>
+                            <StackPanel>
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto" />
+                                        <ColumnDefinition Width="*" />
+                                    </Grid.ColumnDefinitions>
+                                    <Image Source="{Binding Icon}" Width="60" Height="60" RenderOptions.BitmapScalingMode="HighQuality" />
+                                    <StackPanel Grid.Column="1" Margin="16,2,0,0" VerticalAlignment="Center">
+                                        <TextBlock Text="{Binding Name}" Style="{StaticResource H2}" FontSize="19" TextTrimming="CharacterEllipsis" />
+                                        <TextBlock Style="{StaticResource Caption}" Margin="0,3,0,0">
+                                            <Run Text="{Binding Publisher, Mode=OneWay}" /><Run Text="  ·  " /><Run Text="{Binding VersionText, Mode=OneWay}" />
+                                        </TextBlock>
+                                    </StackPanel>
+                                </Grid>
+                                <Border Style="{StaticResource Pill}" Margin="0,16,0,0">
+                                    <StackPanel Orientation="Horizontal">
+                                        <Ellipse Style="{StaticResource PillDot}" />
+                                        <TextBlock Text="{Binding StateText}" Style="{StaticResource PillText}" />
+                                    </StackPanel>
+                                </Border>
+                                <TextBlock Text="{Binding Summary}" FontWeight="SemiBold" FontSize="15" Margin="0,14,0,4" TextWrapping="Wrap"
+                                           Visibility="{Binding Summary, Converter={StaticResource HasValueToVis}}" />
+                                <TextBlock Text="{Binding Description}" Style="{StaticResource Muted}" Height="60" TextTrimming="WordEllipsis" />
+                                <ItemsControl ItemsSource="{Binding Highlights}" Margin="0,12,0,0" Focusable="False">
+                                    <ItemsControl.ItemsPanel>
+                                        <ItemsPanelTemplate>
+                                            <WrapPanel />
+                                        </ItemsPanelTemplate>
+                                    </ItemsControl.ItemsPanel>
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate>
+                                            <Border Style="{StaticResource Chip}">
+                                                <TextBlock Text="{Binding}" FontSize="12" Foreground="{DynamicResource TextMuted}" />
+                                            </Border>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                                <StackPanel Margin="0,10,0,0" Visibility="{Binding IsInstalling, Converter={StaticResource BoolToVis}}">
+                                    <ProgressBar Value="{Binding InstallProgress, Mode=OneWay}" />
+                                    <TextBlock Text="{Binding InstallPhase}" Style="{StaticResource Caption}" Margin="0,6,0,0" />
+                                </StackPanel>
+                                <TextBlock Text="{Binding InstallError}" Foreground="{DynamicResource CoralFg}" TextWrapping="Wrap" Margin="0,10,0,0"
+                                           Visibility="{Binding InstallError, Converter={StaticResource HasValueToVis}}" />
+                                <StackPanel Orientation="Horizontal" Margin="0,16,0,0">
+                                    <Button Style="{StaticResource BtnPrimary}" Content="{Binding PrimaryText}" ui:Btn.Glyph="{Binding PrimaryGlyph}" Command="{Binding PrimaryCommand}" />
+                                    <Button Style="{StaticResource BtnGhost}" Content="Détails" Margin="8,0,0,0" Command="{Binding ShowDetailCommand}" />
+                                </StackPanel>
+                            </StackPanel>
+                        </Border>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+
+            <Border Margin="0,8,0,0" CornerRadius="12" Background="{DynamicResource SurfaceAlt}" Padding="16,12">
+                <StackPanel Orientation="Horizontal">
+                    <TextBlock Text="&#xE946;" Style="{StaticResource Glyph}" Foreground="{DynamicResource AccentFg}" Margin="0,0,12,0" />
+                    <TextBlock Style="{StaticResource Muted}" TextWrapping="Wrap">
+                        <Run Text="Bientôt : « Télécharger et installer », pour recevoir les nouvelles applis et leurs mises à jour sans repasser par le dossier " /><Run Text="{x:Static ui:Brand.Name}" /><Run Text="." />
+                    </TextBlock>
+                </StackPanel>
+            </Border>
+        </StackPanel>
+    </ScrollViewer>
+</UserControl>

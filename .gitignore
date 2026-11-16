@@ -1,0 +1,15 @@
+# Sorties de compilation et d'assemblage
+bin/
+obj/
+dist/
+out/
+.verif/
+.vs/
+*.user
+*.suo
+
+# Rapports et journaux de test
+kkao-selftest*.json
+kkao-selftest*.log
+kkao-verif-en-ligne*.txt
+*.log

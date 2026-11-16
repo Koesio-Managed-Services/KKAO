@@ -1,0 +1,310 @@
+<UserControl x:Class="KKAO.Ui.AppDetailPage"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:ui="clr-namespace:KKAO.Ui">
+    <UserControl.Resources>
+        <!-- Libelle + aide d'un reglage (colonne de gauche) -->
+        <DataTemplate x:Key="SettingLabel">
+            <StackPanel VerticalAlignment="Center">
+                <TextBlock Text="{Binding Label}" FontWeight="SemiBold" TextWrapping="Wrap" />
+                <TextBlock Text="{Binding Description}" Style="{StaticResource Caption}" Margin="0,2,0,0" Visibility="{Binding Description, Converter={StaticResource HasValueToVis}}" />
+                <TextBlock Text="{Binding Error}" Foreground="{DynamicResource CoralFg}" FontSize="12" Margin="0,3,0,0" TextWrapping="Wrap" Visibility="{Binding Error, Converter={StaticResource HasValueToVis}}" />
+                <TextBlock Text="Enregistrement…" Style="{StaticResource Caption}" Foreground="{DynamicResource AccentFg}" Margin="0,3,0,0" Visibility="{Binding IsSaving, Converter={StaticResource BoolToVis}}" />
+            </StackPanel>
+        </DataTemplate>
+
+        <DataTemplate x:Key="Setting.toggle">
+            <Grid Margin="0,8">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <ContentPresenter Content="{Binding}" ContentTemplate="{StaticResource SettingLabel}" />
+                <CheckBox Grid.Column="1" Style="{StaticResource Switch}" IsChecked="{Binding BoolValue}" IsEnabled="{Binding Enabled}" />
+            </Grid>
+        </DataTemplate>
+        <DataTemplate x:Key="Setting.text">
+            <Grid Margin="0,8">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="300" />
+                </Grid.ColumnDefinitions>
+                <ContentPresenter Content="{Binding}" ContentTemplate="{StaticResource SettingLabel}" />
+                <TextBox Grid.Column="1" Text="{Binding TextValue, UpdateSourceTrigger=LostFocus}" IsEnabled="{Binding Enabled}" ToolTip="{Binding Placeholder}" />
+            </Grid>
+        </DataTemplate>
+        <DataTemplate x:Key="Setting.number">
+            <Grid Margin="0,8">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="120" />
+                </Grid.ColumnDefinitions>
+                <ContentPresenter Content="{Binding}" ContentTemplate="{StaticResource SettingLabel}" />
+                <TextBox Grid.Column="1" Text="{Binding TextValue, UpdateSourceTrigger=LostFocus}" IsEnabled="{Binding Enabled}" TextAlignment="Right" />
+            </Grid>
+        </DataTemplate>
+        <DataTemplate x:Key="Setting.hotkey">
+            <Grid Margin="0,8">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <ContentPresenter Content="{Binding}" ContentTemplate="{StaticResource SettingLabel}" />
+                <ui:HotkeyBox Grid.Column="1" Value="{Binding TextValue, Mode=TwoWay}" IsEnabled="{Binding Enabled}" />
+            </Grid>
+        </DataTemplate>
+        <DataTemplate x:Key="Setting.folder">
+            <Grid Margin="0,8">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <StackPanel>
+                    <ContentPresenter Content="{Binding}" ContentTemplate="{StaticResource SettingLabel}" />
+                    <TextBlock Text="{Binding TextValue}" Style="{StaticResource Caption}" FontFamily="{DynamicResource MonoFont}" Margin="0,4,0,0" TextTrimming="CharacterEllipsis" />
+                </StackPanel>
+                <Button Grid.Column="1" Style="{StaticResource Btn}" Content="Parcourir…" ui:Btn.Glyph="&#xE8B7;" Command="{Binding BrowseCommand}" VerticalAlignment="Center" Margin="16,0,0,0" />
+            </Grid>
+        </DataTemplate>
+        <DataTemplate x:Key="Setting.choice">
+            <Grid Margin="0,8">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <ContentPresenter Content="{Binding}" ContentTemplate="{StaticResource SettingLabel}" />
+                <ItemsControl Grid.Column="1" ItemsSource="{Binding Options}" Focusable="False" IsEnabled="{Binding Enabled}" MaxWidth="460">
+                    <ItemsControl.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <WrapPanel HorizontalAlignment="Right" />
+                        </ItemsPanelTemplate>
+                    </ItemsControl.ItemsPanel>
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <RadioButton Style="{StaticResource Segment}" GroupName="{Binding Group}" Content="{Binding Label}" IsChecked="{Binding Selected}" />
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </Grid>
+        </DataTemplate>
+        <DataTemplate x:Key="Setting.button">
+            <Grid Margin="0,8">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <TextBlock Text="{Binding Description}" Style="{StaticResource Muted}" VerticalAlignment="Center" />
+                <Button Grid.Column="1" Style="{StaticResource Btn}" Content="{Binding Label}" Command="{Binding ButtonCommand}" Margin="16,0,0,0" />
+            </Grid>
+        </DataTemplate>
+        <DataTemplate x:Key="Setting.info">
+            <Grid Margin="0,8">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <ContentPresenter Content="{Binding}" ContentTemplate="{StaticResource SettingLabel}" />
+                <TextBlock Grid.Column="1" Text="{Binding TextValue}" Foreground="{DynamicResource TextMuted}" VerticalAlignment="Center" Margin="16,0,0,0" MaxWidth="380" TextTrimming="CharacterEllipsis" />
+            </Grid>
+        </DataTemplate>
+        <ui:SettingTemplateSelector x:Key="SettingSelector" />
+    </UserControl.Resources>
+
+    <ScrollViewer x:Name="Scroller" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Focusable="False">
+        <StackPanel Margin="36,22,36,36" MaxWidth="1000" DataContext="{Binding SelectedApp}">
+            <Button Style="{StaticResource BtnGhost}" Content="Applications" ui:Btn.Glyph="&#xE72B;" HorizontalAlignment="Left" Margin="-10,0,0,12"
+                    Command="{Binding DataContext.BackToAppsCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" />
+
+            <!-- En-tete -->
+            <Border Style="{StaticResource Card}" Padding="26">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <Image Source="{Binding Icon}" Width="84" Height="84" RenderOptions.BitmapScalingMode="HighQuality" VerticalAlignment="Top" />
+                    <StackPanel Grid.Column="1" Margin="22,2,16,0">
+                        <TextBlock Text="{Binding Name}" Style="{StaticResource H1}" />
+                        <TextBlock Style="{StaticResource Caption}" FontSize="13" Margin="0,4,0,0">
+                            <Run Text="{Binding Publisher, Mode=OneWay}" /><Run Text="  ·  " /><Run Text="{Binding VersionText, Mode=OneWay}" /><Run Text="  ·  " /><Run Text="{Binding SourceText, Mode=OneWay}" />
+                        </TextBlock>
+                        <Border Style="{StaticResource Pill}" Margin="0,12,0,0">
+                            <StackPanel Orientation="Horizontal">
+                                <Ellipse Style="{StaticResource PillDot}" />
+                                <TextBlock Text="{Binding StateText}" Style="{StaticResource PillText}" />
+                            </StackPanel>
+                        </Border>
+                        <TextBlock Text="{Binding StatusTooltip}" Style="{StaticResource Caption}" Margin="0,8,0,0" Visibility="{Binding StatusTooltip, Converter={StaticResource HasValueToVis}}" />
+                    </StackPanel>
+                    <StackPanel Grid.Column="2" VerticalAlignment="Top">
+                        <Button Style="{StaticResource BtnPrimary}" Content="{Binding PrimaryText}" ui:Btn.Glyph="{Binding PrimaryGlyph}" Command="{Binding PrimaryCommand}" HorizontalAlignment="Stretch" />
+                        <StackPanel Orientation="Horizontal" Margin="0,10,0,0" HorizontalAlignment="Right" Visibility="{Binding IsRunning, Converter={StaticResource BoolToVis}}">
+                            <Button Style="{StaticResource BtnIcon}" Content="&#xE72C;" ToolTip="Redémarrer" Command="{Binding RestartCommand}" />
+                            <Button Style="{StaticResource BtnIcon}" Content="&#xE71A;" ToolTip="Arrêter" Command="{Binding StopCommand}" />
+                        </StackPanel>
+                    </StackPanel>
+                </Grid>
+            </Border>
+
+            <StackPanel Margin="0,12,0,0" Visibility="{Binding IsInstalling, Converter={StaticResource BoolToVis}}">
+                <ProgressBar Value="{Binding InstallProgress, Mode=OneWay}" />
+                <TextBlock Text="{Binding InstallPhase}" Style="{StaticResource Caption}" Margin="0,6,0,0" />
+            </StackPanel>
+            <TextBlock Text="{Binding InstallError}" Foreground="{DynamicResource CoralFg}" TextWrapping="Wrap" Margin="4,12,0,0" Visibility="{Binding InstallError, Converter={StaticResource HasValueToVis}}" />
+
+            <!-- Description -->
+            <StackPanel Margin="4,22,0,0" Visibility="{Binding Description, Converter={StaticResource HasValueToVis}}">
+                <TextBlock Text="{Binding Summary}" Style="{StaticResource H3}" TextWrapping="Wrap" />
+                <TextBlock Text="{Binding Description}" Style="{StaticResource Muted}" Margin="0,6,0,0" MaxWidth="820" HorizontalAlignment="Left" />
+                <ItemsControl ItemsSource="{Binding Highlights}" Margin="0,12,0,0" Focusable="False">
+                    <ItemsControl.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <WrapPanel />
+                        </ItemsPanelTemplate>
+                    </ItemsControl.ItemsPanel>
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <Border Style="{StaticResource Chip}">
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock Text="&#xE73E;" Style="{StaticResource Glyph}" FontSize="11" Foreground="{DynamicResource AccentFg}" Margin="0,0,6,0" />
+                                    <TextBlock Text="{Binding}" FontSize="12" Foreground="{DynamicResource TextMuted}" />
+                                </StackPanel>
+                            </Border>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </StackPanel>
+
+            <!-- Pas encore installee -->
+            <Border Style="{StaticResource Card}" Margin="0,22,0,0" Visibility="{Binding IsPresent, Converter={StaticResource BoolToVis}, ConverterParameter=invert}">
+                <StackPanel>
+                    <TextBlock Text="Prête à installer" Style="{StaticResource H3}" />
+                    <TextBlock Style="{StaticResource Muted}" Margin="0,6,0,0"
+                               Text="L'installation ne prend que quelques secondes, pour vous seul et sans droits administrateur. Vous pourrez la désinstaller quand vous voulez : vos données restent." />
+                    <TextBlock Style="{StaticResource Caption}" Margin="0,8,0,0" Visibility="{Binding SizeText, Converter={StaticResource HasValueToVis}}">
+                        <Run Text="Espace nécessaire : " /><Run Text="{Binding SizeText, Mode=OneWay}" />
+                    </TextBlock>
+                </StackPanel>
+            </Border>
+
+            <!-- Dans KKAO -->
+            <Border Style="{StaticResource Card}" Margin="0,22,0,0" Visibility="{Binding IsPresent, Converter={StaticResource BoolToVis}}">
+                <StackPanel>
+                    <TextBlock Style="{StaticResource H3}"><Run Text="Dans " /><Run Text="{x:Static ui:Brand.Name}" /></TextBlock>
+                    <CheckBox Style="{StaticResource Switch}" Margin="0,16,0,0" IsChecked="{Binding Autostart}" IsEnabled="{Binding Protocol}">
+                        <StackPanel>
+                            <TextBlock FontWeight="SemiBold"><Run Text="Démarrer avec " /><Run Text="{x:Static ui:Brand.Name}" /></TextBlock>
+                            <TextBlock Style="{StaticResource Caption}" Margin="0,2,0,0">
+                                <Run Text="L'appli se lance en même temps que " /><Run Text="{x:Static ui:Brand.Name}" /><Run Text=", sans icône à elle (ses raccourcis clavier sont alors actifs)." />
+                            </TextBlock>
+                        </StackPanel>
+                    </CheckBox>
+                    <Grid Margin="0,18,0,0">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <StackPanel VerticalAlignment="Center">
+                            <TextBlock Text="Icône près de l'horloge" FontWeight="SemiBold" />
+                            <TextBlock Style="{StaticResource Caption}" Margin="0,2,0,0">
+                                <Run Text="Une icône à elle en plus de celle de " /><Run Text="{x:Static ui:Brand.Name}" /><Run Text=", quand elle tourne." />
+                            </TextBlock>
+                        </StackPanel>
+                        <WrapPanel Grid.Column="1" IsEnabled="{Binding Protocol}">
+                            <RadioButton Style="{StaticResource Segment}" GroupName="{Binding Id, StringFormat=icon-{0}}" Content="Comme le réglage général"
+                                         IsChecked="{Binding IconMode, Converter={StaticResource EqualsToBool}, ConverterParameter=inherit}" />
+                            <RadioButton Style="{StaticResource Segment}" GroupName="{Binding Id, StringFormat=icon-{0}}" Content="Toujours"
+                                         IsChecked="{Binding IconMode, Converter={StaticResource EqualsToBool}, ConverterParameter=own}" />
+                            <RadioButton Style="{StaticResource Segment}" GroupName="{Binding Id, StringFormat=icon-{0}}" Content="Jamais"
+                                         IsChecked="{Binding IconMode, Converter={StaticResource EqualsToBool}, ConverterParameter=none}" />
+                        </WrapPanel>
+                    </Grid>
+                </StackPanel>
+            </Border>
+
+            <!-- Actions -->
+            <Border Style="{StaticResource Card}" Margin="0,22,0,0" Visibility="{Binding IsPresent, Converter={StaticResource BoolToVis}}">
+                <StackPanel>
+                    <TextBlock Text="Actions" Style="{StaticResource H3}" />
+                    <TextBlock Style="{StaticResource Caption}" Margin="0,4,0,8" FontSize="13">
+                        <Run Text="Cochez celles à mettre dans votre menu rapide (clic droit sur l'icône " /><Run Text="{x:Static ui:Brand.Name}" /><Run Text="). Les raccourcis clavier se règlent dans l'appli, ici ou dans sa fenêtre." />
+                    </TextBlock>
+                    <TextBlock Style="{StaticResource Muted}" Margin="0,8,0,0" Visibility="{Binding HasActions, Converter={StaticResource BoolToVis}, ConverterParameter=invert}"
+                               Text="Démarrez l'appli une première fois pour découvrir ses actions." />
+                    <ItemsControl ItemsSource="{Binding Actions}" Focusable="False">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Border BorderBrush="{DynamicResource Border}" BorderThickness="0,1,0,0" Padding="0,10">
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="Auto" />
+                                            <ColumnDefinition Width="Auto" />
+                                            <ColumnDefinition Width="Auto" />
+                                        </Grid.ColumnDefinitions>
+                                        <StackPanel VerticalAlignment="Center">
+                                            <TextBlock Text="{Binding Label}" FontWeight="SemiBold" />
+                                            <TextBlock Text="{Binding ShortcutError}" Foreground="{DynamicResource CoralFg}" FontSize="12" Visibility="{Binding ShortcutError, Converter={StaticResource HasValueToVis}}" />
+                                        </StackPanel>
+                                        <Border Grid.Column="1" Style="{StaticResource Kbd}" Margin="12,0" Visibility="{Binding Shortcut, Converter={StaticResource HasValueToVis}}">
+                                            <TextBlock Text="{Binding Shortcut}" FontSize="12" FontFamily="{DynamicResource MonoFont}" Foreground="{DynamicResource TextMuted}" />
+                                        </Border>
+                                        <Button Grid.Column="2" Style="{StaticResource BtnLink}" Content="Lancer" ui:Btn.Glyph="&#xE768;" Command="{Binding RunCommand}" Margin="0,0,12,0" />
+                                        <CheckBox Grid.Column="3" Style="{StaticResource Switch}" IsChecked="{Binding InQuickMenu}" ToolTip="Dans le menu rapide" />
+                                    </Grid>
+                                </Border>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </StackPanel>
+            </Border>
+
+            <!-- Reglages de l'appli -->
+            <Border Style="{StaticResource Card}" Margin="0,22,0,0" Visibility="{Binding IsPresent, Converter={StaticResource BoolToVis}}">
+                <StackPanel>
+                    <TextBlock Style="{StaticResource H3}"><Run Text="Réglages de " /><Run Text="{Binding Name, Mode=OneWay}" /></TextBlock>
+                    <StackPanel Visibility="{Binding HasNativeSettings, Converter={StaticResource BoolToVis}, ConverterParameter=invert}" Margin="0,10,0,0">
+                        <TextBlock Text="{Binding SettingsHint}" Style="{StaticResource Muted}" />
+                        <StackPanel Orientation="Horizontal" Margin="0,14,0,0">
+                            <Button Style="{StaticResource Btn}" Content="Ouvrir ses réglages" ui:Btn.Glyph="&#xE713;" Command="{Binding OpenSettingsCommand}"
+                                    Visibility="{Binding CanOpenOwnSettings, Converter={StaticResource BoolToVis}}" Margin="0,0,10,0" />
+                            <Button Style="{StaticResource Btn}" Content="Démarrer" ui:Btn.Glyph="&#xE768;" Command="{Binding StartCommand}"
+                                    Visibility="{Binding IsStopped, Converter={StaticResource BoolToVis}}" />
+                        </StackPanel>
+                    </StackPanel>
+                    <ItemsControl ItemsSource="{Binding SettingsSections}" Focusable="False" Visibility="{Binding HasNativeSettings, Converter={StaticResource BoolToVis}}">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <StackPanel Margin="0,14,0,0">
+                                    <TextBlock Text="{Binding Title}" FontSize="12" FontWeight="Bold" Foreground="{DynamicResource AccentFg}" Margin="0,0,0,4"
+                                               Visibility="{Binding Title, Converter={StaticResource HasValueToVis}}" />
+                                    <ItemsControl ItemsSource="{Binding Items}" ItemTemplateSelector="{StaticResource SettingSelector}" Focusable="False" />
+                                </StackPanel>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </StackPanel>
+            </Border>
+
+            <!-- A propos de l'appli -->
+            <Border Style="{StaticResource Card}" Margin="0,22,0,0" Visibility="{Binding IsPresent, Converter={StaticResource BoolToVis}}">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <StackPanel>
+                        <TextBlock Text="Emplacement" Style="{StaticResource H3}" />
+                        <TextBlock Text="{Binding Location}" Style="{StaticResource Caption}" FontFamily="{DynamicResource MonoFont}" Margin="0,6,0,0" TextTrimming="CharacterEllipsis" />
+                        <StackPanel Orientation="Horizontal" Margin="0,12,0,0">
+                            <Button Style="{StaticResource Btn}" Content="Ouvrir le dossier" ui:Btn.Glyph="&#xE8B7;" Command="{Binding OpenFolderCommand}" Margin="0,0,10,0" />
+                        </StackPanel>
+                    </StackPanel>
+                    <Button Grid.Column="1" Style="{StaticResource BtnDanger}" Content="Désinstaller" ui:Btn.Glyph="&#xE74D;" VerticalAlignment="Bottom"
+                            Command="{Binding UninstallCommand}" Visibility="{Binding CanUninstall, Converter={StaticResource BoolToVis}}" />
+                </Grid>
+            </Border>
+        </StackPanel>
+    </ScrollViewer>
+</UserControl>

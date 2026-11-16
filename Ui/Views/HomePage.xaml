@@ -1,0 +1,182 @@
+<UserControl x:Class="KKAO.Ui.HomePage"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:ui="clr-namespace:KKAO.Ui">
+    <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Focusable="False">
+        <StackPanel Margin="36,30,36,36" MaxWidth="1120">
+
+            <!-- Bandeau d'accueil -->
+            <Border CornerRadius="22" Background="{DynamicResource HeroBrush}" Padding="34,30" ClipToBounds="True">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <StackPanel VerticalAlignment="Center">
+                        <TextBlock Text="{Binding Greeting}" FontFamily="{DynamicResource TitleFont}" FontSize="34" FontWeight="Bold" Foreground="White" />
+                        <TextBlock Text="{Binding HeroText}" Foreground="#EEFFFFFF" FontSize="15" Margin="0,10,40,0" TextWrapping="Wrap" LineHeight="22" MaxWidth="620" HorizontalAlignment="Left" />
+                        <WrapPanel Margin="0,22,0,0">
+                            <Border Style="{StaticResource HeroChip}">
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock Text="&#xE71D;" Style="{StaticResource Glyph}" Foreground="White" FontSize="13" Margin="0,0,8,0" />
+                                    <TextBlock Text="{Binding InstalledCountText}" Foreground="White" FontWeight="SemiBold" />
+                                </StackPanel>
+                            </Border>
+                            <Border Style="{StaticResource HeroChip}">
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock Text="&#xE768;" Style="{StaticResource Glyph}" Foreground="White" FontSize="13" Margin="0,0,8,0" />
+                                    <TextBlock Text="{Binding RunningCountText}" Foreground="White" FontWeight="SemiBold" />
+                                </StackPanel>
+                            </Border>
+                            <Border Style="{StaticResource HeroChip}">
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock Text="&#xE945;" Style="{StaticResource Glyph}" Foreground="White" FontSize="13" Margin="0,0,8,0" />
+                                    <TextBlock Text="{Binding QuickCountText}" Foreground="White" FontWeight="SemiBold" />
+                                </StackPanel>
+                            </Border>
+                        </WrapPanel>
+                    </StackPanel>
+                    <Grid Grid.Column="1" Width="170" Height="170" Margin="10,-6,-6,-6">
+                        <Ellipse Fill="#22FFFFFF" Width="170" Height="170" />
+                        <Ellipse Fill="#1AFFFFFF" Width="124" Height="124" />
+                        <Image Source="{Binding LogoLarge}" Width="96" Height="96" RenderOptions.BitmapScalingMode="HighQuality">
+                            <Image.Effect>
+                                <DropShadowEffect BlurRadius="20" ShadowDepth="5" Opacity="0.35" />
+                            </Image.Effect>
+                        </Image>
+                    </Grid>
+                </Grid>
+            </Border>
+
+            <!-- Premiers pas -->
+            <Border Style="{StaticResource Card}" Margin="0,20,0,0" Visibility="{Binding AllQuestsDone, Converter={StaticResource BoolToVis}, ConverterParameter=invert}">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <Border Width="52" Height="52" CornerRadius="26" Background="{DynamicResource AccentSoft}">
+                        <TextBlock Text="&#xE735;" Style="{StaticResource Glyph}" FontSize="22" Foreground="{DynamicResource AccentFg}" />
+                    </Border>
+                    <StackPanel Grid.Column="1" Margin="18,0,18,0" VerticalAlignment="Center">
+                        <TextBlock Style="{StaticResource H3}">
+                            <Run Text="Premiers pas" /><Run Text="  ·  " Foreground="{DynamicResource TextFaint}" /><Run Text="{Binding QuestsText, Mode=OneWay}" Foreground="{DynamicResource AccentFg}" /><Run Text=" missions" Foreground="{DynamicResource TextMuted}" FontWeight="Normal" />
+                        </TextBlock>
+                        <ProgressBar Value="{Binding QuestProgress, Mode=OneWay}" Margin="0,10,0,10" />
+                        <TextBlock Style="{StaticResource Muted}">
+                            <Run Text="Prochaine mission : " /><Run Text="{Binding NextQuest.Title, Mode=OneWay}" Foreground="{DynamicResource Text}" FontWeight="SemiBold" />
+                        </TextBlock>
+                    </StackPanel>
+                    <Button Grid.Column="2" Style="{StaticResource BtnPrimary}" Content="C'est parti" ui:Btn.Glyph="&#xE768;" VerticalAlignment="Center"
+                            Command="{Binding NextQuest.GoCommand}" />
+                </Grid>
+            </Border>
+
+            <!-- Vos applis -->
+            <DockPanel Margin="2,30,0,14">
+                <Button DockPanel.Dock="Right" Style="{StaticResource BtnLink}" Content="Toutes les applis" ui:Btn.Glyph="&#xE76C;"
+                        Command="{Binding NavigateCommand}" CommandParameter="apps" />
+                <TextBlock Text="Vos applis" Style="{StaticResource H2}" VerticalAlignment="Center" />
+            </DockPanel>
+
+            <Border Style="{StaticResource Card}" Visibility="{Binding NoInstalledApps, Converter={StaticResource BoolToVis}}" Padding="28">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <TextBlock Text="&#xE71D;" Style="{StaticResource Glyph}" FontSize="34" Foreground="{DynamicResource AccentFg}" />
+                    <StackPanel Grid.Column="1" Margin="22,0">
+                        <TextBlock Text="Votre Kaisse est vide… pour l'instant !" Style="{StaticResource H3}" />
+                        <TextBlock Style="{StaticResource Muted}" Margin="0,4,0,0">
+                            <Run Text="Des applis Koesio sont livrées avec " /><Run Text="{x:Static ui:Brand.Name}" /><Run Text=". Choisissez celles qui vous servent : elles s'installent en un clic, pour vous seul." />
+                        </TextBlock>
+                    </StackPanel>
+                    <Button Grid.Column="2" Style="{StaticResource BtnHero}" Content="Découvrir les applis" VerticalAlignment="Center"
+                            Command="{Binding NavigateCommand}" CommandParameter="apps" />
+                </Grid>
+            </Border>
+
+            <ItemsControl ItemsSource="{Binding InstalledApps}" Focusable="False">
+                <ItemsControl.ItemsPanel>
+                    <ItemsPanelTemplate>
+                        <WrapPanel />
+                    </ItemsPanelTemplate>
+                </ItemsControl.ItemsPanel>
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                        <Border Style="{StaticResource Card}" Width="318" Margin="0,0,16,16" Padding="18" Cursor="Hand">
+                            <Border.InputBindings>
+                                <MouseBinding MouseAction="LeftClick" Command="{Binding ShowDetailCommand}" />
+                            </Border.InputBindings>
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
+                                </Grid.RowDefinitions>
+                                <Image Source="{Binding Icon}" Width="48" Height="48" RenderOptions.BitmapScalingMode="HighQuality" VerticalAlignment="Top" />
+                                <StackPanel Grid.Column="1" Margin="14,0,0,0">
+                                    <TextBlock Text="{Binding Name}" Style="{StaticResource H3}" />
+                                    <Border Style="{StaticResource Pill}" Margin="0,6,0,0">
+                                        <StackPanel Orientation="Horizontal">
+                                            <Ellipse Style="{StaticResource PillDot}" />
+                                            <TextBlock Text="{Binding StateText}" Style="{StaticResource PillText}" />
+                                        </StackPanel>
+                                    </Border>
+                                </StackPanel>
+                                <StackPanel Grid.Row="1" Grid.ColumnSpan="2" Orientation="Horizontal" Margin="0,16,0,0">
+                                    <Button Style="{StaticResource BtnPrimary}" Content="{Binding PrimaryText}" ui:Btn.Glyph="{Binding PrimaryGlyph}" Command="{Binding PrimaryCommand}" />
+                                    <Button Style="{StaticResource BtnGhost}" Content="Détails" Margin="8,0,0,0" Command="{Binding ShowDetailCommand}" />
+                                </StackPanel>
+                            </Grid>
+                        </Border>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+
+            <!-- Actions rapides -->
+            <DockPanel Margin="2,18,0,14">
+                <Button DockPanel.Dock="Right" Style="{StaticResource BtnLink}" Content="Personnaliser" ui:Btn.Glyph="&#xE70F;"
+                        Command="{Binding NavigateCommand}" CommandParameter="quick" />
+                <TextBlock Text="Actions rapides" Style="{StaticResource H2}" VerticalAlignment="Center" />
+            </DockPanel>
+            <TextBlock Style="{StaticResource Muted}" Margin="2,0,0,14" Visibility="{Binding HasQuickEntries, Converter={StaticResource BoolToVis}, ConverterParameter=invert}"
+                       Text="Pas encore d'action rapide. Installez une appli, puis choisissez ses actions préférées dans « Actions rapides »." />
+            <ItemsControl ItemsSource="{Binding QuickChips}" Focusable="False">
+                <ItemsControl.ItemsPanel>
+                    <ItemsPanelTemplate>
+                        <WrapPanel />
+                    </ItemsPanelTemplate>
+                </ItemsControl.ItemsPanel>
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                        <Button Style="{StaticResource QuickChip}" Command="{Binding RunCommand}" ToolTip="{Binding AppName}">
+                            <StackPanel Orientation="Horizontal">
+                                <Image Source="{Binding AppIcon}" Width="22" Height="22" RenderOptions.BitmapScalingMode="HighQuality" />
+                                <TextBlock Text="{Binding DisplayLabel}" Margin="10,0,0,0" VerticalAlignment="Center" FontWeight="SemiBold" />
+                                <Border Style="{StaticResource Kbd}" Margin="12,0,0,0" Visibility="{Binding Shortcut, Converter={StaticResource HasValueToVis}}">
+                                    <TextBlock Text="{Binding Shortcut}" FontSize="11" FontFamily="{DynamicResource MonoFont}" Foreground="{DynamicResource TextMuted}" />
+                                </Border>
+                            </StackPanel>
+                        </Button>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+
+            <Border Margin="0,16,0,0" CornerRadius="12" Background="{DynamicResource SurfaceAlt}" Padding="16,12">
+                <StackPanel Orientation="Horizontal">
+                    <TextBlock Text="&#xE82F;" Style="{StaticResource Glyph}" Foreground="{DynamicResource AccentFg}" Margin="0,0,12,0" />
+                    <TextBlock Style="{StaticResource Muted}" TextWrapping="Wrap">
+                        <Run Text="Astuce : " FontWeight="SemiBold" Foreground="{DynamicResource Text}" /><Run Text="faites un clic droit sur l'icône « K » près de l'horloge pour lancer ces actions de n'importe où." />
+                    </TextBlock>
+                </StackPanel>
+            </Border>
+        </StackPanel>
+    </ScrollViewer>
+</UserControl>

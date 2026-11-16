@@ -1,0 +1,329 @@
+<UserControl x:Class="KKAO.Ui.OnboardingView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:ui="clr-namespace:KKAO.Ui">
+    <Grid Background="{DynamicResource Overlay}">
+        <Border Style="{StaticResource Card}" Width="800" MinHeight="560" HorizontalAlignment="Center" VerticalAlignment="Center" Padding="0" CornerRadius="22">
+            <Border.Effect>
+                <DropShadowEffect BlurRadius="40" ShadowDepth="8" Opacity="0.45" />
+            </Border.Effect>
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="*" />
+                    <RowDefinition Height="Auto" />
+                </Grid.RowDefinitions>
+
+                <!-- Bande de couleur + progression -->
+                <Border Height="6" CornerRadius="22,22,0,0" Background="{DynamicResource HeroBrushSoft}" VerticalAlignment="Top" />
+                <DockPanel Margin="30,24,24,0">
+                    <Button DockPanel.Dock="Right" Style="{StaticResource BtnGhost}" Content="Passer le guide" Command="{Binding SkipCommand}"
+                            Visibility="{Binding ShowSkip, Converter={StaticResource BoolToVis}}" />
+                    <ItemsControl ItemsSource="{Binding Dots}" Focusable="False" VerticalAlignment="Center">
+                        <ItemsControl.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <StackPanel Orientation="Horizontal" />
+                            </ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Border x:Name="Dot" Width="10" Height="10" CornerRadius="5" Margin="0,0,8,0" Background="{DynamicResource SurfaceHover}" />
+                                <DataTemplate.Triggers>
+                                    <DataTrigger Binding="{Binding Done}" Value="True">
+                                        <Setter TargetName="Dot" Property="Background" Value="{DynamicResource AccentFg}" />
+                                    </DataTrigger>
+                                    <DataTrigger Binding="{Binding Active}" Value="True">
+                                        <Setter TargetName="Dot" Property="Width" Value="30" />
+                                        <Setter TargetName="Dot" Property="Background" Value="{DynamicResource HeroBrushSoft}" />
+                                    </DataTrigger>
+                                </DataTemplate.Triggers>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </DockPanel>
+
+                <Grid Grid.Row="1" Margin="46,18,46,10">
+                    <!-- 1. Bienvenue -->
+                    <StackPanel VerticalAlignment="Center" Visibility="{Binding IsWelcome, Converter={StaticResource BoolToVis}}">
+                        <Grid Width="200" Height="200" HorizontalAlignment="Center">
+                            <Ellipse Fill="{DynamicResource AccentSoft}" />
+                            <Ellipse Fill="{DynamicResource AccentSoft}" Margin="30" />
+                            <Image Source="{Binding DataContext.LogoLarge, RelativeSource={RelativeSource AncestorType=ui:ShellView}}" Width="110" Height="110" RenderOptions.BitmapScalingMode="HighQuality">
+                                <Image.Effect>
+                                    <DropShadowEffect BlurRadius="24" ShadowDepth="6" Opacity="0.4" />
+                                </Image.Effect>
+                            </Image>
+                        </Grid>
+                        <TextBlock Style="{StaticResource H1}" FontSize="36" HorizontalAlignment="Center" TextAlignment="Center" Margin="0,22,0,0">
+                            <Run Text="Bienvenue dans " /><Run Text="{x:Static ui:Brand.Name}" Foreground="{DynamicResource AccentFg}" />
+                        </TextBlock>
+                        <TextBlock Text="{x:Static ui:Brand.LongName}" Style="{StaticResource Marker}" HorizontalAlignment="Center" Margin="0,6,0,0" />
+                        <TextBlock Style="{StaticResource Muted}" FontSize="16" LineHeight="24" TextAlignment="Center" Margin="40,18,40,0"
+                                   Text="Toutes vos applis Koesio réunies sous une seule icône, près de l'horloge. En 2 minutes, on installe, on règle, et c'est parti." />
+                    </StackPanel>
+
+                    <!-- 2. Installer KKAO -->
+                    <Grid Visibility="{Binding IsInstall, Converter={StaticResource BoolToVis}}" VerticalAlignment="Center">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="200" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+                        <Grid Width="170" Height="170" VerticalAlignment="Top">
+                            <Ellipse Fill="{DynamicResource AccentSoft}" />
+                            <TextBlock Text="&#xE896;" Style="{StaticResource Glyph}" FontSize="64" Foreground="{DynamicResource AccentFg}" />
+                        </Grid>
+                        <StackPanel Grid.Column="1" Margin="20,0,0,0">
+                            <TextBlock Style="{StaticResource H1}"><Run Text="Installons " /><Run Text="{x:Static ui:Brand.Name}" /><Run Text=" sur ce PC" /></TextBlock>
+                            <TextBlock Style="{StaticResource Muted}" FontSize="15" Margin="0,10,0,0"
+                                       Text="Pour vous seul, sans droits administrateur, en quelques secondes. Vous pourrez le désinstaller depuis les Paramètres de Windows." />
+                            <CheckBox Style="{StaticResource Switch}" Margin="0,22,0,0" IsChecked="{Binding StartWithWindows}">
+                                <StackPanel>
+                                    <TextBlock FontWeight="SemiBold" Text="Lancer avec Windows" />
+                                    <TextBlock Style="{StaticResource Caption}" Text="Votre icône est prête dès l'ouverture de session." />
+                                </StackPanel>
+                            </CheckBox>
+                            <CheckBox Style="{StaticResource Switch}" Margin="0,14,0,0" IsChecked="{Binding DesktopShortcut}">
+                                <StackPanel>
+                                    <TextBlock FontWeight="SemiBold" Text="Raccourci sur le Bureau" />
+                                    <TextBlock Style="{StaticResource Caption}" Text="En plus de celui du menu Démarrer." />
+                                </StackPanel>
+                            </CheckBox>
+                            <StackPanel Orientation="Horizontal" Margin="0,24,0,0">
+                                <Button Style="{StaticResource BtnHero}" ui:Btn.Glyph="&#xE896;" Command="{Binding InstallKkaoCommand}">
+                                    <TextBlock><Run Text="Installer " /><Run Text="{x:Static ui:Brand.Name}" /></TextBlock>
+                                </Button>
+                                <Button Style="{StaticResource BtnGhost}" Content="Plus tard" Margin="10,0,0,0" Command="{Binding LaterCommand}" />
+                            </StackPanel>
+                            <StackPanel Margin="0,18,0,0" Visibility="{Binding InstallText, Converter={StaticResource HasValueToVis}}">
+                                <ProgressBar Value="{Binding InstallProgress, Mode=OneWay}" />
+                                <TextBlock Text="{Binding InstallText}" Style="{StaticResource Caption}" Margin="0,6,0,0" />
+                            </StackPanel>
+                            <TextBlock Text="{Binding InstallError}" Foreground="{DynamicResource CoralFg}" TextWrapping="Wrap" Margin="0,12,0,0"
+                                       Visibility="{Binding InstallError, Converter={StaticResource HasValueToVis}}" />
+                            <TextBlock Style="{StaticResource Caption}" Margin="0,16,0,0" FontFamily="{DynamicResource MonoFont}" Text="{Binding InstallPlace}" />
+                        </StackPanel>
+                    </Grid>
+
+                    <!-- 3. Style -->
+                    <StackPanel Visibility="{Binding IsTheme, Converter={StaticResource BoolToVis}}" VerticalAlignment="Center">
+                        <TextBlock Style="{StaticResource H1}" Text="Votre style" HorizontalAlignment="Center" />
+                        <TextBlock Style="{StaticResource Muted}" FontSize="15" HorizontalAlignment="Center" Margin="0,8,0,26" Text="Cliquez pour essayer : tout change à l'instant." />
+                        <UniformGrid Columns="3" HorizontalAlignment="Center">
+                            <Button Command="{Binding ThemeCommand}" CommandParameter="dark" Margin="10,0" Cursor="Hand">
+                                <Button.Template>
+                                    <ControlTemplate TargetType="Button">
+                                        <StackPanel>
+                                            <Border x:Name="Bd" Width="190" Height="130" CornerRadius="14" Background="#232323" BorderBrush="{DynamicResource Border}" BorderThickness="2">
+                                                <Grid>
+                                                    <Border Width="46" HorizontalAlignment="Left" Background="#1B1B1B" CornerRadius="12,0,0,12" />
+                                                    <Border Height="34" Margin="58,12,12,0" VerticalAlignment="Top" CornerRadius="6" Background="{DynamicResource HeroBrush}" />
+                                                    <Border Height="54" Margin="58,54,12,0" VerticalAlignment="Top" CornerRadius="6" Background="#2D2D2D" />
+                                                    <TextBlock Text="&#xE708;" FontFamily="{DynamicResource IconFont}" FontSize="16" Foreground="#C9A3E6" Margin="15,14,0,0" />
+                                                </Grid>
+                                            </Border>
+                                            <TextBlock Text="Sombre" FontWeight="SemiBold" HorizontalAlignment="Center" Margin="0,10,0,0" />
+                                        </StackPanel>
+                                        <ControlTemplate.Triggers>
+                                            <Trigger Property="IsMouseOver" Value="True">
+                                                <Setter TargetName="Bd" Property="BorderBrush" Value="{DynamicResource Accent}" />
+                                            </Trigger>
+                                        </ControlTemplate.Triggers>
+                                    </ControlTemplate>
+                                </Button.Template>
+                            </Button>
+                            <Button Command="{Binding ThemeCommand}" CommandParameter="light" Margin="10,0" Cursor="Hand">
+                                <Button.Template>
+                                    <ControlTemplate TargetType="Button">
+                                        <StackPanel>
+                                            <Border x:Name="Bd" Width="190" Height="130" CornerRadius="14" Background="#FAF9F5" BorderBrush="{DynamicResource Border}" BorderThickness="2">
+                                                <Grid>
+                                                    <Border Width="46" HorizontalAlignment="Left" Background="#F1EFE8" CornerRadius="12,0,0,12" />
+                                                    <Border Height="34" Margin="58,12,12,0" VerticalAlignment="Top" CornerRadius="6" Background="{DynamicResource HeroBrush}" />
+                                                    <Border Height="54" Margin="58,54,12,0" VerticalAlignment="Top" CornerRadius="6" Background="White" BorderBrush="#E6E6E6" BorderThickness="1" />
+                                                    <TextBlock Text="&#xE706;" FontFamily="{DynamicResource IconFont}" FontSize="16" Foreground="#6E398E" Margin="15,14,0,0" />
+                                                </Grid>
+                                            </Border>
+                                            <TextBlock Text="Clair" FontWeight="SemiBold" HorizontalAlignment="Center" Margin="0,10,0,0" />
+                                        </StackPanel>
+                                        <ControlTemplate.Triggers>
+                                            <Trigger Property="IsMouseOver" Value="True">
+                                                <Setter TargetName="Bd" Property="BorderBrush" Value="{DynamicResource Accent}" />
+                                            </Trigger>
+                                        </ControlTemplate.Triggers>
+                                    </ControlTemplate>
+                                </Button.Template>
+                            </Button>
+                            <Button Command="{Binding ThemeCommand}" CommandParameter="system" Margin="10,0" Cursor="Hand">
+                                <Button.Template>
+                                    <ControlTemplate TargetType="Button">
+                                        <StackPanel>
+                                            <Border x:Name="Bd" Width="190" Height="130" CornerRadius="14" BorderBrush="{DynamicResource Border}" BorderThickness="2" ClipToBounds="True">
+                                                <Border.Background>
+                                                    <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
+                                                        <GradientStop Color="#232323" Offset="0.5" />
+                                                        <GradientStop Color="#FAF9F5" Offset="0.5" />
+                                                    </LinearGradientBrush>
+                                                </Border.Background>
+                                                <TextBlock Text="&#xE7F4;" FontFamily="{DynamicResource IconFont}" FontSize="40" Foreground="#6E398E" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                            </Border>
+                                            <TextBlock Text="Comme Windows" FontWeight="SemiBold" HorizontalAlignment="Center" Margin="0,10,0,0" />
+                                        </StackPanel>
+                                        <ControlTemplate.Triggers>
+                                            <Trigger Property="IsMouseOver" Value="True">
+                                                <Setter TargetName="Bd" Property="BorderBrush" Value="{DynamicResource Accent}" />
+                                            </Trigger>
+                                        </ControlTemplate.Triggers>
+                                    </ControlTemplate>
+                                </Button.Template>
+                            </Button>
+                        </UniformGrid>
+                    </StackPanel>
+
+                    <!-- 4. Applis -->
+                    <StackPanel Visibility="{Binding IsApps, Converter={StaticResource BoolToVis}}">
+                        <TextBlock Style="{StaticResource H1}" Text="Choisissez vos applis" />
+                        <TextBlock Style="{StaticResource Muted}" FontSize="15" Margin="0,8,0,20" Text="{Binding AppsHint}" />
+                        <Button Style="{StaticResource Btn}" Content="Réessayer" ui:Btn.Glyph="&#xE72C;" HorizontalAlignment="Left" Margin="0,0,0,20"
+                                Command="{Binding RetryCommand}" Visibility="{Binding ShowRetry, Converter={StaticResource BoolToVis}}" />
+                        <ItemsControl ItemsSource="{Binding Choices}" Focusable="False">
+                            <ItemsControl.ItemsPanel>
+                                <ItemsPanelTemplate>
+                                    <UniformGrid Columns="2" />
+                                </ItemsPanelTemplate>
+                            </ItemsControl.ItemsPanel>
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <CheckBox Style="{StaticResource SelectTile}" IsChecked="{Binding Selected}" IsEnabled="{Binding Selectable}" Margin="0,0,14,14">
+                                        <StackPanel Margin="0,0,30,0">
+                                            <StackPanel Orientation="Horizontal">
+                                                <Image Source="{Binding App.Icon}" Width="46" Height="46" RenderOptions.BitmapScalingMode="HighQuality" />
+                                                <StackPanel Margin="12,0,0,0" VerticalAlignment="Center">
+                                                    <TextBlock Text="{Binding App.Name}" Style="{StaticResource H3}" />
+                                                    <TextBlock Text="{Binding App.StateText}" Style="{StaticResource Caption}" />
+                                                </StackPanel>
+                                            </StackPanel>
+                                            <TextBlock Text="{Binding App.Summary}" Style="{StaticResource Muted}" Margin="0,10,0,0" />
+                                            <ProgressBar Value="{Binding App.InstallProgress, Mode=OneWay}" Margin="0,10,0,0" Visibility="{Binding App.IsInstalling, Converter={StaticResource BoolToVis}}" />
+                                        </StackPanel>
+                                    </CheckBox>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                        <Button Style="{StaticResource BtnHero}" Content="Installer la sélection" ui:Btn.Glyph="&#xE896;" HorizontalAlignment="Left" Margin="0,6,0,0"
+                                Command="{Binding InstallAppsCommand}" />
+                    </StackPanel>
+
+                    <!-- 5. Icone -->
+                    <StackPanel Visibility="{Binding IsTray, Converter={StaticResource BoolToVis}}" VerticalAlignment="Center">
+                        <TextBlock Style="{StaticResource H1}"><Run Text="Votre icône " /><Run Text="{x:Static ui:Brand.Name}" /></TextBlock>
+                        <TextBlock Style="{StaticResource Muted}" FontSize="15" Margin="0,8,0,62" Text="Elle vit en bas à droite, près de l'horloge. C'est votre porte d'entrée vers toutes les applis." />
+                        <!-- Barre des taches dessinee -->
+                        <Grid HorizontalAlignment="Center">
+                            <Border Width="560" Height="64" CornerRadius="12" Background="#1F1F1F" BorderBrush="#3C3C3C" BorderThickness="1">
+                                <Grid>
+                                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Left" Margin="18,0,0,0" VerticalAlignment="Center">
+                                        <Border Width="26" Height="26" CornerRadius="5" Background="#3C3C3C" Margin="0,0,12,0" />
+                                        <Border Width="26" Height="26" CornerRadius="5" Background="#3C3C3C" Margin="0,0,12,0" />
+                                        <Border Width="26" Height="26" CornerRadius="5" Background="#3C3C3C" />
+                                    </StackPanel>
+                                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,0,18,0" VerticalAlignment="Center">
+                                        <TextBlock Text="&#xE70E;" FontFamily="{DynamicResource IconFont}" FontSize="12" Foreground="#B0AEA5" VerticalAlignment="Center" Margin="0,0,16,0" />
+                                        <Grid Width="40" Height="40" Margin="0,0,16,0">
+                                            <Ellipse Stroke="#E94B57" StrokeThickness="2.5" />
+                                            <Image Source="{Binding DataContext.LogoImage, RelativeSource={RelativeSource AncestorType=ui:ShellView}}" Width="24" Height="24" />
+                                        </Grid>
+                                        <TextBlock Text="&#xE767;" FontFamily="{DynamicResource IconFont}" FontSize="15" Foreground="#B0AEA5" VerticalAlignment="Center" Margin="0,0,16,0" />
+                                        <StackPanel VerticalAlignment="Center">
+                                            <TextBlock Text="14:32" Foreground="#FAF9F5" FontSize="12" HorizontalAlignment="Right" />
+                                            <TextBlock Text="06/11/2026" Foreground="#B0AEA5" FontSize="11" HorizontalAlignment="Right" />
+                                        </StackPanel>
+                                    </StackPanel>
+                                </Grid>
+                            </Border>
+                            <TextBlock Text="C'est moi !" Style="{StaticResource Marker}" FontSize="26" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,-44,100,0">
+                                <TextBlock.RenderTransform>
+                                    <RotateTransform Angle="-8" />
+                                </TextBlock.RenderTransform>
+                            </TextBlock>
+                        </Grid>
+                        <UniformGrid Columns="3" Margin="0,30,0,0">
+                            <StackPanel Margin="0,0,16,0">
+                                <TextBlock Text="&#xE962;" Style="{StaticResource Glyph}" FontSize="24" Foreground="{DynamicResource AccentFg}" HorizontalAlignment="Left" />
+                                <TextBlock Text="Clic gauche" FontWeight="Bold" Margin="0,8,0,2" />
+                                <TextBlock Style="{StaticResource Muted}"><Run Text="Ouvre " /><Run Text="{x:Static ui:Brand.Name}" /><Run Text=" : vos applis, leurs réglages, vos missions." /></TextBlock>
+                            </StackPanel>
+                            <StackPanel Margin="0,0,16,0">
+                                <TextBlock Text="&#xE945;" Style="{StaticResource Glyph}" FontSize="24" Foreground="{DynamicResource AccentFg}" HorizontalAlignment="Left" />
+                                <TextBlock Text="Clic droit" FontWeight="Bold" Margin="0,8,0,2" />
+                                <TextBlock Style="{StaticResource Muted}" Text="Vos actions rapides, de n'importe où, en un clic." />
+                            </StackPanel>
+                            <StackPanel>
+                                <TextBlock Text="&#xE7C4;" Style="{StaticResource Glyph}" FontSize="24" Foreground="{DynamicResource AccentFg}" HorizontalAlignment="Left" />
+                                <TextBlock Text="Astuce Windows 11" FontWeight="Bold" Margin="0,8,0,2" />
+                                <TextBlock Style="{StaticResource Muted}" Text="Icône cachée sous « ^ » ? Glissez-la sur la barre pour la garder visible." />
+                            </StackPanel>
+                        </UniformGrid>
+                    </StackPanel>
+
+                    <!-- 6. Actions rapides -->
+                    <Grid Visibility="{Binding IsQuick, Converter={StaticResource BoolToVis}}" VerticalAlignment="Center">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="290" />
+                        </Grid.ColumnDefinitions>
+                        <StackPanel Margin="0,0,30,0" VerticalAlignment="Center">
+                            <TextBlock Style="{StaticResource H1}" Text="Vos actions rapides" />
+                            <TextBlock Style="{StaticResource Muted}" FontSize="15" Margin="0,10,0,0"
+                                       Text="Une note, une nouvelle procédure, un post-it… Chaque appli propose ses actions : vous choisissez celles qui vont dans votre menu du clic droit." />
+                            <TextBlock Style="{StaticResource Muted}" FontSize="15" Margin="0,12,0,0"
+                                       Text="Les raccourcis clavier (par exemple Ctrl+Alt+F1) se règlent dans chaque appli et s'affichent ici." />
+                        </StackPanel>
+                        <Border Grid.Column="1" Background="{DynamicResource MenuBg}" BorderBrush="{DynamicResource BorderStrong}" BorderThickness="1" CornerRadius="10" Padding="6">
+                            <Border.Effect>
+                                <DropShadowEffect BlurRadius="20" ShadowDepth="4" Opacity="0.3" />
+                            </Border.Effect>
+                            <StackPanel>
+                                <TextBlock FontWeight="Bold" Margin="10,7"><Run Text="Ouvrir " /><Run Text="{x:Static ui:Brand.Name}" /></TextBlock>
+                                <Rectangle Height="1" Fill="{DynamicResource Border}" Margin="6,3" />
+                                <DockPanel Margin="10,7">
+                                    <TextBlock DockPanel.Dock="Right" Text="Ctrl+Alt+F1" Foreground="{DynamicResource TextFaint}" FontSize="12" />
+                                    <TextBlock Text="Quicknote" />
+                                </DockPanel>
+                                <DockPanel Margin="10,7">
+                                    <TextBlock DockPanel.Dock="Right" Text="Ctrl+Alt+F4" Foreground="{DynamicResource TextFaint}" FontSize="12" />
+                                    <TextBlock Text="Nouvelle procédure" />
+                                </DockPanel>
+                                <TextBlock Text="Post-it" Margin="10,7" />
+                                <Rectangle Height="1" Fill="{DynamicResource Border}" Margin="6,3" />
+                                <TextBlock Text="Réglages…" Margin="10,7" />
+                                <TextBlock Margin="10,7"><Run Text="Quitter " /><Run Text="{x:Static ui:Brand.Name}" /></TextBlock>
+                            </StackPanel>
+                        </Border>
+                    </Grid>
+
+                    <!-- 7. C'est pret -->
+                    <StackPanel Visibility="{Binding IsDone, Converter={StaticResource BoolToVis}}" VerticalAlignment="Center">
+                        <Grid Width="160" Height="160" HorizontalAlignment="Center">
+                            <Ellipse Fill="{DynamicResource HeroBrush}" />
+                            <TextBlock Text="&#xE735;" Style="{StaticResource Glyph}" FontSize="64" Foreground="White" />
+                        </Grid>
+                        <TextBlock Style="{StaticResource H1}" FontSize="36" Text="C'est prêt !" HorizontalAlignment="Center" Margin="0,22,0,0" />
+                        <TextBlock Text="Succès débloqué : Bienvenue à bord !" Style="{StaticResource Marker}" HorizontalAlignment="Center" Margin="0,8,0,0" />
+                        <TextBlock Style="{StaticResource Muted}" FontSize="15" TextAlignment="Center" Margin="50,16,50,0"
+                                   Text="Une petite visite guidée pour finir ? Ensuite, place aux « Premiers pas » : six missions pour devenir un pro." />
+                    </StackPanel>
+                </Grid>
+
+                <!-- Boutons -->
+                <DockPanel Grid.Row="2" Margin="30,10,30,26">
+                    <Button DockPanel.Dock="Left" Style="{StaticResource BtnGhost}" Content="Retour" ui:Btn.Glyph="&#xE72B;" Command="{Binding BackCommand}"
+                            Visibility="{Binding ShowBack, Converter={StaticResource BoolToVis}}" />
+                    <Button DockPanel.Dock="Right" Style="{StaticResource BtnPrimary}" Content="{Binding NextText}" Padding="22,10" Command="{Binding NextCommand}" />
+                    <TextBlock Style="{StaticResource Caption}" HorizontalAlignment="Center" VerticalAlignment="Center">
+                        <Run Text="Étape " /><Run Text="{Binding StepNumber, Mode=OneWay}" /><Run Text=" sur " /><Run Text="{Binding StepCount, Mode=OneWay}" />
+                    </TextBlock>
+                </DockPanel>
+            </Grid>
+        </Border>
+    </Grid>
+</UserControl>

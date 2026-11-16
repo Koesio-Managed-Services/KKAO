@@ -1,0 +1,24 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <!-- Charte Koesio : titres Arboria (secours Century Gothic), corps Be Vietnam (secours Arial Nova), annotations Permanent Marker -->
+    <FontFamily x:Key="TitleFont">Arboria, Century Gothic, Segoe UI</FontFamily>
+    <FontFamily x:Key="BodyFont">Be Vietnam Pro, Be Vietnam, Arial Nova, Segoe UI</FontFamily>
+    <FontFamily x:Key="MarkerFont">Permanent Marker, Ink Free, Segoe Print</FontFamily>
+    <FontFamily x:Key="IconFont">Segoe Fluent Icons, Segoe MDL2 Assets</FontFamily>
+    <FontFamily x:Key="MonoFont">Cascadia Mono, Consolas</FontFamily>
+
+    <!-- Couleurs de marque (identiques en sombre et en clair) -->
+    <Color x:Key="KoesioViolet">#6E398E</Color>
+    <Color x:Key="KoesioCoral">#E94B57</Color>
+    <Color x:Key="KoesioBlue">#41C0F0</Color>
+
+    <LinearGradientBrush x:Key="HeroBrush" StartPoint="0,0" EndPoint="1,1">
+        <GradientStop Color="#6E398E" Offset="0" />
+        <GradientStop Color="#8E3F80" Offset="0.45" />
+        <GradientStop Color="#E94B57" Offset="1" />
+    </LinearGradientBrush>
+    <LinearGradientBrush x:Key="HeroBrushSoft" StartPoint="0,0" EndPoint="1,0">
+        <GradientStop Color="#6E398E" Offset="0" />
+        <GradientStop Color="#E94B57" Offset="1" />
+    </LinearGradientBrush>
+</ResourceDictionary>

@@ -1,0 +1,17 @@
+{
+  "tools": [
+    {
+      "id": "instruktion", "name": "InstruKtion", "aliases": ["procedurier"],
+      "exe": "..\\Procedurier\\node_modules\\electron\\dist\\electron.exe",
+      "args": ["..\\Procedurier"], "cwd": "..\\Procedurier",
+      "icon": "..\\Procedurier\\assets\\icon.png",
+      "autostart": false, "protocol": true
+    },
+    {
+      "id": "kalepin", "name": "Kalepin", "aliases": ["papernotes"],
+      "exe": "..\\Kalepin\\dist\\Kalepin.exe",
+      "icon": "..\\Kalepin\\assets\\icon.png",
+      "args": [], "autostart": false, "protocol": true
+    }
+  ]
+}

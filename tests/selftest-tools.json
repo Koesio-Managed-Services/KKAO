@@ -1,0 +1,24 @@
+{
+  "tools": [
+    {
+      "id": "fake1", "name": "Faux outil 1",
+      "exe": "node", "args": [".\\fake-tool.js", "--id", "fake1", "--status", "warn", "--noise", "200"],
+      "autostart": true, "protocol": true
+    },
+    {
+      "id": "fake2", "name": "Faux outil 2",
+      "exe": "node", "args": [".\\fake-tool.js", "--id", "fake2", "--status", "active", "--retry-once", ".\\fake2-retry.marker"],
+      "autostart": true, "protocol": true
+    },
+    {
+      "id": "fake3", "name": "Faux outil 3",
+      "exe": "node", "args": [".\\fake-tool.js", "--id", "fake3", "--retry-always", "--retry-after", "200"],
+      "autostart": false, "protocol": true
+    },
+    {
+      "id": "fake-launcher", "name": "Lanceur simple",
+      "exe": "node", "args": ["--version"],
+      "autostart": false, "protocol": false
+    }
+  ]
+}
