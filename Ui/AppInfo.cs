@@ -52,6 +52,8 @@ namespace KKAO.Ui
         public List<SettingsSection> Settings { get; set; } = new List<SettingsSection>();
         public int SettingsRevision { get; set; }
         public bool HasOwnSettingsAction { get; set; }
+        // Action reservee « open » : la fenetre principale de l'appli (bouton « Ouvrir »)
+        public bool HasOpenAction { get; set; }
         public string Location { get; set; }
         public long Size { get; set; }
     }

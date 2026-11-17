@@ -91,18 +91,9 @@ namespace KKAO
             return list;
         }
 
-        public void Save(IEnumerable<QuickEntry> entries)
-        {
-            // Sans separateur en tete, en fin, ni double
-            var clean = new List<QuickEntry>();
-            foreach (var entry in entries)
-            {
-                if (entry.IsSeparator && (clean.Count == 0 || clean[clean.Count - 1].IsSeparator)) continue;
-                clean.Add(entry);
-            }
-            while (clean.Count > 0 && clean[clean.Count - 1].IsSeparator) clean.RemoveAt(clean.Count - 1);
-            _settings.SetQuickMenu(clean);
-        }
+        // Enregistre la liste telle que l'utilisateur l'a placee, separateurs compris : un separateur ajoute en fin
+        // doit rester pour qu'on puisse le monter a sa place. Le menu (Resolve, MenuBuilder) ignore ceux en tete, en fin ou doubles.
+        public void Save(IEnumerable<QuickEntry> entries) => _settings.SetQuickMenu(entries.Where(e => e != null).ToList());
 
         public void Reset() => _settings.SetQuickMenu(null);
 

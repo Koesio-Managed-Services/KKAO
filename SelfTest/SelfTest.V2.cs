@@ -137,10 +137,14 @@ namespace KKAO
                 });
                 var custom = quick.Resolve();
                 var later = quick.Resolve(new QuickEntry { ToolId = "fakev2", ActionId = "later" });
-                Check("menu rapide : défaut, personnalisé, actions disparues",
+                // « Ajouter un séparateur » l'ajoute en fin : il doit rester dans la liste de l'éditeur pour être monté à sa place
+                var kept = quick.Entries;
+                Check("menu rapide : défaut, personnalisé, actions disparues, séparateur ajouté gardé",
                     defaults.Count == 2 && defaults[0].Label == "Nouvelle note…" && defaults[0].Shortcut == "Ctrl+Alt+F1" && defaults[0].Bold && defaults[1].Label == "Nouveau post-it"
-                    && custom.Count == 4 && custom[0].Label == "Post-it" && custom[1].Entry.IsSeparator && custom[2].Unavailable && custom[3].Unavailable && !later.Enabled,
-                    "défaut = 2 « pin » du catalogue ; personnalisé : libellé renommé, séparateur de fin retiré, action et appli disparues signalées ; action désactivée par l'appli grisée");
+                    && custom.Count == 4 && custom[0].Label == "Post-it" && custom[1].Entry.IsSeparator && custom[2].Unavailable && custom[3].Unavailable && !later.Enabled
+                    && kept.Count == 5 && kept[4].IsSeparator,
+                    "défaut = 2 « pin » du catalogue ; personnalisé : libellé renommé, séparateur de fin gardé dans l'éditeur (" + kept.Count + " entrées) mais absent du menu, "
+                    + "action et appli disparues signalées ; action désactivée par l'appli grisée");
 
                 // Demarrage a la demande : appli arretee, clic sur une action rapide
                 var stopped = false;
@@ -424,6 +428,53 @@ namespace KKAO
             catch (Exception ex)
             {
                 Check("interface : pages et guide dessinés (sombre et clair)", false, ex.GetBaseException().Message);
+            }
+            CheckOpenAndSeparator();
+        }
+
+        // Bouton principal d'une appli installee = « Ouvrir » (action « open »), pas son action par defaut ;
+        // « Ajouter un séparateur » : visible dans l'editeur, masque dans l'apercu tant qu'il est en fin
+        void CheckOpenAndSeparator()
+        {
+            const string name = "accueil : « Ouvrir » l'appli ; « Ajouter un séparateur »";
+            try
+            {
+                var vm = new Ui.MainViewModel(null);
+                var app = new Ui.AppViewModel(vm, "kalepin");
+                var info = new Ui.AppInfo { Id = "kalepin", Name = "Kalepin", Installed = true, Protocol = true, Run = Ui.AppRunState.Running, HasOpenAction = true };
+                info.Actions.Add(new Ui.AppActionInfo { Id = "quickNote", Label = "Nouvelle note…", IsDefault = true });
+                info.Actions.Add(new Ui.AppActionInfo { Id = "open", Label = "Ouvrir Kalepin" });
+                app.Apply(info);
+                var running = app.PrimaryText + (app.HasOpen ? "/open" : "");
+                info.Run = Ui.AppRunState.Stopped;
+                app.Apply(info);
+                var stopped = app.PrimaryText + (app.HasOpen ? "/open" : "");
+                info.HasOpenAction = false;
+                app.Apply(info);
+                var oldApp = app.PrimaryText;
+
+                vm.DemoQuick = new List<Ui.QuickInfo>
+                {
+                    new Ui.QuickInfo { Entry = new QuickEntry { ToolId = "kalepin", ActionId = "quickNote" }, Label = "Note", AppId = "kalepin", AppName = "Kalepin" },
+                };
+                vm.Refresh();
+                vm.AddSeparatorCommand.Execute(null);
+                var added = vm.QuickEntries.Count == 2 && vm.QuickEntries[1].IsSeparator && !vm.QuickEntries[1].InPreview;
+                vm.QuickEntries[1].MoveUpCommand.Execute(null);
+                vm.DemoQuick.Add(new Ui.QuickInfo { Entry = new QuickEntry { ToolId = "kalepin", ActionId = "newPostIt" }, Label = "Post-it", AppId = "kalepin", AppName = "Kalepin" });
+                vm.Refresh();
+                var moved = vm.QuickEntries.Count == 3 && vm.QuickEntries[0].IsSeparator && !vm.QuickEntries[0].InPreview;
+                vm.QuickEntries[0].MoveDownCommand.Execute(null);
+                var between = vm.QuickEntries.Count == 3 && vm.QuickEntries[1].IsSeparator && vm.QuickEntries[1].InPreview;
+
+                Check(name, running == "Ouvrir/open" && stopped == "Ouvrir/open" && oldApp == "Ouvrir" && added && moved && between,
+                    "en marche : " + running + ", arrêtée : " + stopped + " (pas « Nouvelle note »), sans action « open » : " + oldApp
+                    + " ; séparateur ajouté en fin " + (added ? "gardé, masqué dans l'aperçu" : "PERDU") + ", en tête " + (moved ? "masqué" : "visible")
+                    + ", entre deux actions " + (between ? "affiché" : "MASQUÉ"));
+            }
+            catch (Exception ex)
+            {
+                Check(name, false, ex.GetBaseException().Message);
             }
         }
     }

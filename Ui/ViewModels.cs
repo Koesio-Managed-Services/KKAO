@@ -113,16 +113,19 @@ namespace KKAO.Ui
         public ICommand OpenFolderCommand { get; }
         public ICommand ShowDetailCommand { get; }
 
-        AppActionInfo _defaultAction;
         int _settingsRevision = -1;
+
+        // L'appli publie l'action reservee « open » (sa fenetre principale)
+        bool _hasOpen;
+        public bool HasOpen { get => _hasOpen; private set => Set(ref _hasOpen, value); }
 
         void RunPrimary()
         {
             var c = _main.Controller;
             if (c == null) return;
             if (CanInstall || HasUpdate) c.InstallApp(Id, startAfter: true);
+            else if (HasOpen) c.OpenApp(Id);
             else if (!IsRunning) c.Start(Id);
-            else if (_defaultAction != null) c.RunAction(Id, _defaultAction.Id, "menu");
             else _main.ShowApp(this);
         }
 
@@ -161,7 +164,7 @@ namespace KKAO.Ui
                 SizeText = info.Size > 0 ? Bundler.FormatSize(info.Size) : null;
                 SourceText = info.Dev ? "Appli de développement (tools.json)" : info.Installed ? "Installée par " + Branding.Name
                     : info.Download ? "Téléchargée à l'installation" : "Livrée avec " + Branding.Name + ", pas encore installée";
-                _defaultAction = info.Actions.FirstOrDefault(a => a.IsDefault);
+                HasOpen = info.Protocol && info.HasOpenAction;
 
                 // Etat affiche
                 if (info.Installing)
@@ -214,9 +217,8 @@ namespace KKAO.Ui
                 if (CanInstall) { PrimaryText = "Installer"; PrimaryGlyph = ""; }
                 else if (HasUpdate) { PrimaryText = "Mettre à jour"; PrimaryGlyph = ""; }
                 else if (info.Installing) { PrimaryText = "Installation…"; PrimaryGlyph = null; }
-                else if (!info.Protocol) { PrimaryText = "Ouvrir"; PrimaryGlyph = ""; }
-                else if (!IsRunning) { PrimaryText = "Démarrer"; PrimaryGlyph = ""; }
-                else if (_defaultAction != null) { PrimaryText = _defaultAction.Label.TrimEnd('…', '.'); PrimaryGlyph = ""; }
+                // Appli installee : « Ouvrir » = son interface principale (action reservee « open »), demarree a la demande
+                else if (!info.Protocol || HasOpen || !IsRunning) { PrimaryText = "Ouvrir"; PrimaryGlyph = ""; }
                 else { PrimaryText = "Détails"; PrimaryGlyph = null; }
 
                 // Actions du catalogue
@@ -510,6 +512,8 @@ namespace KKAO.Ui
         public string Shortcut => Info.Shortcut;
         public bool Unavailable => Info.Unavailable;
         public bool Bold => Info.Bold;
+        // Visible dans l'apercu, comme dans le vrai menu : ni action disparue, ni separateur en tete, en fin ou double
+        public bool InPreview { get; set; } = true;
         public ImageSource AppIcon => _main.IconFor(Info.AppId, Info.AppName);
 
         string _label;

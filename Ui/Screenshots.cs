@@ -256,6 +256,7 @@ namespace KKAO.Ui
                 Location = @"C:\Users\…\AppData\Local\Programs\KKAO\apps\instruktion",
                 HasActionsCatalog = installed,
                 HasOwnSettingsAction = true,
+                HasOpenAction = installed,
                 HasSettingsSchema = installed,
             };
             instruktion.Highlights.AddRange(new[] { "Capture en un raccourci", "Annotations et floutage", "Export IT Glue" });
@@ -294,6 +295,7 @@ namespace KKAO.Ui
                 Size = 1L << 20,
                 HasActionsCatalog = installed,
                 HasOwnSettingsAction = true,
+                HasOpenAction = installed,
             };
             kalepin.Highlights.AddRange(new[] { "Note au raccourci", "Classée par jour", "Post-it sur le bureau" });
             if (installed)

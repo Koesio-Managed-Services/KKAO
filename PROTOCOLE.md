@@ -80,6 +80,7 @@ Ordre conseillé après `hello` : `actions`, `settings`, `menu`, `status`. Puis 
 
 ```json
 {"type":"actions","items":[
+  {"id":"open","label":"Ouvrir Kalepin"},
   {"id":"quickNote","label":"Nouvelle note…","shortcut":"Ctrl+Alt+F1","default":true,"pin":true},
   {"id":"newPostIt","label":"Nouveau post-it"},
   {"id":"showPostIts","label":"Afficher les post-it","check":true,"checked":false},
@@ -107,6 +108,11 @@ Règles :
 - Catalogue **complet** à chaque envoi, 200 actions au plus.
 - Id réservé `settings` : ouvre la fenêtre de réglages de l'appli. KKAO s'en sert pour « Réglages de *appli*… »
   (notamment pour changer un raccourci).
+- Id réservé `open` **(KKAO 2.2)** : affiche l'**interface principale** de l'appli (la restaure si elle est réduite,
+  la met au premier plan). Libellé conseillé « Ouvrir *appli* », sans raccourci imposé. KKAO s'en sert pour le bouton
+  **Ouvrir** de l'accueil, de la page Applications et de la fiche de l'appli ; appli arrêtée : démarrage à la demande
+  puis `open`. Sans `open` dans le catalogue, le bouton démarre simplement l'appli (et, si elle tourne déjà, ouvre sa
+  fiche dans KKAO). `open` n'est jamais l'action `default` d'office : chaque appli garde la sienne pour son icône.
 - Un même id peut figurer dans `actions` et dans `menu` : c'est la même `command`.
 - **L'appli exécute tout id de son catalogue reçu dans `command`, même s'il n'est pas dans son menu du moment**,
   et même juste après `welcome` (voir *Démarrage à la demande*).

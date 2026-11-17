@@ -138,6 +138,7 @@ namespace KKAO.Ui
                     InQuickMenu = Quick.Contains(tool.Id, action.Id),
                 });
             info.HasOwnSettingsAction = actions.Any(a => a.Id == "settings") || MenuNode.Flatten(tool.Menu).Any(n => n.IsClickable && n.Id == "settings");
+            info.HasOpenAction = actions.Any(a => a.Id == OpenActionId) || MenuNode.Flatten(tool.Menu).Any(n => n.IsClickable && n.Id == OpenActionId);
             ApplyInstallState(info);
             return info;
         }
@@ -411,6 +412,11 @@ namespace KKAO.Ui
             var tool = Tools.Find(toolId);
             if (tool != null && tool.SendSetSetting(settingId, value)) CompleteQuest(Quests.AppSettings);
         }
+
+        // Id reserve du protocole : ouvre l'interface principale de l'appli (demarree a la demande si besoin)
+        public const string OpenActionId = "open";
+
+        public void OpenApp(string toolId) => RunAction(toolId, OpenActionId, "menu");
 
         public void OpenOwnSettings(string toolId)
         {

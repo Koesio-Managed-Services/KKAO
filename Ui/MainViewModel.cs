@@ -265,12 +265,18 @@ namespace KKAO.Ui
             _quickSignature = signature;
             QuickEntries.Clear();
             QuickChips.Clear();
+            var previous = (QuickEntryViewModel)null;
             for (var i = 0; i < infos.Count; i++)
             {
                 var vm = new QuickEntryViewModel(this, infos[i], i);
                 QuickEntries.Add(vm);
                 if (!vm.IsSeparator && !vm.Unavailable) QuickChips.Add(vm);
+                // Apercu : regles du vrai menu (MenuBuilder)
+                vm.InPreview = vm.IsSeparator ? previous != null && !previous.IsSeparator : !vm.Unavailable;
+                if (vm.InPreview) previous = vm;
             }
+            // Separateur final de l'apercu masque
+            if (previous != null && previous.IsSeparator) previous.InPreview = false;
             Raise(nameof(HasQuickEntries));
             Raise(nameof(QuickCountText));
             QuickCatalog = BuildQuickCatalog();

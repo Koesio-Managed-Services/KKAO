@@ -92,7 +92,7 @@
                             <ItemsControl ItemsSource="{Binding QuickEntries}" Focusable="False">
                                 <ItemsControl.ItemTemplate>
                                     <DataTemplate>
-                                        <Grid>
+                                        <Grid Visibility="{Binding InPreview, Converter={StaticResource BoolToVis}}">
                                             <Rectangle Height="1" Fill="{DynamicResource Border}" Margin="6,4" Visibility="{Binding IsSeparator, Converter={StaticResource BoolToVis}}" />
                                             <Grid Margin="10,6" Visibility="{Binding IsSeparator, Converter={StaticResource BoolToVis}, ConverterParameter=invert}">
                                                 <Grid.ColumnDefinitions>

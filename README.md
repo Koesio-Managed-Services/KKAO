@@ -63,7 +63,7 @@ Une fois : `gh auth login` (GitHub CLI) avec un compte qui peut écrire dans le 
 |---|---|
 | Accueil | Bonjour <prénom>, état des applis, mission suivante, vos applis, vos actions rapides |
 | Applications | Catalogue (Toutes / Installées / Disponibles), Installer, Tout installer, progression du téléchargement |
-| Fiche d'une appli | Démarrer / Arrêter / Redémarrer, Démarrer avec KKAO, icône près de l'horloge, ses actions, **ses réglages affichés dans KKAO**, Désinstaller |
+| Fiche d'une appli | Ouvrir (son interface principale), Démarrer / Arrêter / Redémarrer, Démarrer avec KKAO, icône près de l'horloge, ses actions, **ses réglages affichés dans KKAO**, Désinstaller |
 | Actions rapides | Le menu du clic droit : renommer, réordonner, séparateurs, ajouter depuis le catalogue de chaque appli |
 | Premiers pas | 6 missions, niveau (Apprenti → Maître de la Kaisse), succès débloqués |
 | Réglages | Thème (sombre, clair, comme Windows), icônes, démarrage, installer / désinstaller KKAO, mises à jour, guide, journal |
@@ -92,7 +92,7 @@ publish-github.cmd        :: release GitHub
 | `KKAO.exe --verify-online <rapport.txt> [--catalog <url>]` | Ce que vivra un collègue : téléchargement et installation à blanc |
 | `KKAO.exe --update` | Lancé par KKAO après le téléchargement de sa nouvelle version : se met en place sans question |
 | `KKAO.exe --screenshots <dossier>` | 38 rendus PNG de l'interface (sombre / clair, guide, menu), données de démonstration |
-| `KKAO.exe --selftest <rapport.json> [--tools <fichier>]` | Test automatique sans interface visible (48 vérifications) |
+| `KKAO.exe --selftest <rapport.json> [--tools <fichier>]` | Test automatique sans interface visible (49 vérifications) |
 | `KKAO.exe --uninstall [--quiet]` | Désinstallation |
 | `KKAO.exe --export-icon <fichier.ico>` | Icône de l'exe (`assets\kkao.ico`) |
 
