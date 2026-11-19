@@ -34,6 +34,7 @@ namespace KKAO
                 await CheckRenamedAppAsync(nodeTool);
                 CheckSelfInstall();
                 await RunOnlineAsync(nodeTool);
+                await CheckAutoUpdateAsync(nodeTool);
                 CheckInterface();
             }
             finally

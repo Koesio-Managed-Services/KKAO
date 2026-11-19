@@ -242,7 +242,8 @@ namespace KKAO.Apps
             b.AppendLine();
             b.AppendLine("## Mises à jour");
             b.AppendLine();
-            b.AppendLine(Branding.Name + " consulte cette page au démarrage puis toutes les 6 heures, et propose d'un clic les nouvelles versions de lui-même et des applis. "
+            b.AppendLine(Branding.Name + " consulte cette page au démarrage puis toutes les 6 heures, et installe tout seul les nouvelles versions de lui-même et des applis "
+                + "(depuis la 2.3, réglage activé par défaut) : téléchargées en arrière-plan, installées quand vous n'utilisez pas l'appli, jamais pendant votre travail. "
                 + "Vos réglages et vos documents sont conservés.");
             return b.ToString();
         }

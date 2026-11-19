@@ -15,6 +15,7 @@ namespace KKAO
     //   actionsCache  { "kalepin": [ …dernier catalogue "actions" recu… ] }
     //   icons         { "mode": "launcher" | "all", "tools": { "kalepin": "own" | "none" | "inherit" } }
     //   window        { "left", "top", "width", "height", "maximized" }
+    //   autoUpdate    true (defaut) | false ; updatesSkipped / updatesVerify { "kalepin": "2.3.0" } ; resumeAfterUpdate [ "kalepin" ]
     internal sealed class KkaoSettings
     {
         readonly string _path; // null : en memoire (test automatique, rendus d'ecran)
@@ -324,6 +325,53 @@ namespace KKAO
             section[id] = version;
             Save();
             return true;
+        }
+
+        // Mises a jour automatiques (KKAO 2.3), activees par defaut
+        public bool AutoUpdate
+        {
+            get => Json.GetBool(_root, "autoUpdate") ?? true;
+            set
+            {
+                _root["autoUpdate"] = value;
+                Save();
+            }
+        }
+
+        // Version remise en arriere (ne demarrait pas) : plus de mise a jour automatique vers elle
+        public string SkippedVersion(string id) => Section("updatesSkipped").TryGetValue(id, out var v) ? v as string : null;
+
+        public void SetSkippedVersion(string id, string version)
+        {
+            var section = Section("updatesSkipped", create: true);
+            if (version == null) section.Remove(id);
+            else section[id] = version;
+            Save();
+        }
+
+        // Appli mise a jour, pas encore vue demarrer : id -> version installee (l'ancienne est gardee pour revenir en arriere)
+        public string VerifyPending(string id) => Section("updatesVerify").TryGetValue(id, out var v) ? v as string : null;
+
+        public void SetVerifyPending(string id, string version)
+        {
+            var section = Section("updatesVerify", create: true);
+            if (version == null) section.Remove(id);
+            else section[id] = version;
+            Save();
+        }
+
+        // Applis qui tournaient quand KKAO a redemarre pour se mettre a jour : relancees par la nouvelle version
+        public List<string> TakeResumeAfterUpdate()
+        {
+            var list = (Json.GetArray(_root, "resumeAfterUpdate") ?? new List<object>()).OfType<string>().ToList();
+            if (_root.Remove("resumeAfterUpdate")) Save();
+            return list;
+        }
+
+        public void SetResumeAfterUpdate(IEnumerable<string> ids)
+        {
+            _root["resumeAfterUpdate"] = ids.Cast<object>().ToList();
+            Save();
         }
 
         #endregion

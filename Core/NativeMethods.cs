@@ -18,6 +18,24 @@ namespace KKAO
         [DllImport("user32.dll")]
         public static extern bool SetForegroundWindow(IntPtr hWnd);
 
+        [StructLayout(LayoutKind.Sequential)]
+        struct LastInputInfo
+        {
+            public uint Size;
+            public uint Time;
+        }
+
+        [DllImport("user32.dll")]
+        static extern bool GetLastInputInfo(ref LastInputInfo info);
+
+        // Temps depuis la derniere frappe ou le dernier mouvement de souris de la session
+        public static TimeSpan IdleTime()
+        {
+            var info = new LastInputInfo { Size = (uint)Marshal.SizeOf(typeof(LastInputInfo)) };
+            if (!GetLastInputInfo(ref info)) return TimeSpan.Zero;
+            return TimeSpan.FromMilliseconds(unchecked((uint)Environment.TickCount - info.Time));
+        }
+
         // Flux Zone.Identifier (« fichier telecharge ») : chemin "fichier:Zone.Identifier"
         [DllImport("kernel32.dll", CharSet = CharSet.Unicode, SetLastError = true)]
         public static extern bool DeleteFile(string path);

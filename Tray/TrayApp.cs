@@ -160,7 +160,26 @@ namespace KKAO
             if (problem != null) ShowBalloon(Branding.Name, problem, ToolTipIcon.Warning, OpenToolsFolder);
             else if (afterUpdate)
                 ShowBalloon(Branding.Name + " " + Program.Version + " est installé", "Mise à jour terminée : vos réglages et vos applis sont conservés.", ToolTipIcon.Info, () => ShowWindow(null));
-            _tools.StartAutostart();
+            // Mises a jour automatiques : KKAO deja telecharge → redemarrage dessus avant tout ; sinon les applis pretes
+            // sont installees avant leur lancement, puis les applis ouvertes avant la mise a jour de KKAO sont relancees
+            var resume = settings.TakeResumeAfterUpdate();
+            var relaunching = !devMode && _controller.KkaoUpdateReadyAtStartup();
+            if (relaunching)
+            {
+                _ui.Post(_ => _controller.ApplyKkaoUpdateAtStartup(), null);
+            }
+            else
+            {
+                var mustStart = _tools.Tools.Where(t => _tools.EffectiveAutostart(t)).Select(t => t.Id).Concat(resume).ToList();
+                var held = _controller.InstallReadyUpdatesAtStartup(mustStart);
+                _tools.StartAutostart(t => held.Contains(t.Id));
+                foreach (var id in resume)
+                {
+                    var tool = _tools.Find(id);
+                    if (tool != null && !tool.IsAlive && !held.Contains(id)) tool.Start(userInitiated: false);
+                }
+                _controller.StartAutoUpdates();
+            }
 
             // Nouveautes en ligne : 3 s apres le demarrage, puis toutes les 6 h
             _updateTimer = new System.Windows.Forms.Timer { Interval = 3000 };
@@ -169,10 +188,14 @@ namespace KKAO
                 _updateTimer.Interval = 6 * 3600 * 1000;
                 _controller.CheckForUpdates(userInitiated: false);
             };
-            if (remote.Enabled) _updateTimer.Start();
+            if (remote.Enabled && !relaunching) _updateTimer.Start();
 
             // Premier lancement : guide de demarrage. Demarrage avec Windows : discret (sauf reglage contraire).
-            if (!settings.OnboardingDone)
+            if (relaunching)
+            {
+                // KKAO redemarre tout de suite sur sa nouvelle version : pas de fenetre
+            }
+            else if (!settings.OnboardingDone)
             {
                 ShowWindow(null);
                 _vm.StartOnboarding(settings.OnboardingStep);
@@ -292,6 +315,7 @@ namespace KKAO
             if (disposing)
             {
                 _updateTimer?.Dispose();
+                _controller?.StopAutoUpdates();
                 foreach (var wait in _waits) wait?.Unregister(null);
                 if (_icon != null)
                 {

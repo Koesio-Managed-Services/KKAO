@@ -420,7 +420,16 @@ namespace KKAO.Ui
             }
         }
 
-        bool _startWithWindows, _openAtStartup, _showToolSubmenus = true;
+        bool _startWithWindows, _openAtStartup, _showToolSubmenus = true, _autoUpdate = true;
+
+        public bool AutoUpdate
+        {
+            get => _autoUpdate;
+            set
+            {
+                if (Set(ref _autoUpdate, value) && !_applying && Controller != null) Controller.AutoUpdate = value;
+            }
+        }
         public bool StartWithWindows
         {
             get => _startWithWindows;
@@ -484,7 +493,9 @@ namespace KKAO.Ui
                 var kkao = c.KkaoUpdate;
                 if (kkao != null) parts.Add(Branding.Name + " " + kkao.Version + " est disponible (vous avez la " + Program.Version + ").");
                 var apps = c.AppUpdateCount;
-                if (apps > 0) parts.Add(apps == 1 ? "Une appli a une mise à jour : voir « Applications »." : apps + " applis ont une mise à jour : voir « Applications ».");
+                var plan = c.AutoUpdatePlan();
+                if (plan.Count > 0) parts.AddRange(plan);
+                else if (apps > 0) parts.Add(apps == 1 ? "Une appli a une mise à jour : voir « Applications »." : apps + " applis ont une mise à jour : voir « Applications ».");
                 if (kkao == null && apps == 0 && c.LastUpdateCheck != null && c.UpdateCheckError == null) parts.Add("Tout est à jour.");
                 if (c.UpdateCheckError != null) parts.Add("Dernière recherche impossible : " + c.UpdateCheckError + ".");
                 else if (c.LastUpdateCheck != null) parts.Add("Dernière vérification : " + When(c.LastUpdateCheck.Value) + ".");
@@ -565,6 +576,7 @@ namespace KKAO.Ui
                     StartWithWindows = Controller.StartWithWindows;
                     OpenAtStartup = Controller.Settings.OpenAtStartup;
                     ShowToolSubmenus = Controller.Settings.ShowToolSubmenus;
+                    AutoUpdate = Controller.Settings.AutoUpdate;
                 }
                 Raise(nameof(IsInstalledCopy));
                 Raise(nameof(CanInstallKkao));

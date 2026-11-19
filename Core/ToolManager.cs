@@ -85,10 +85,11 @@ namespace KKAO
             RaiseChanged(tool);
         }
 
-        public void StartAutostart()
+        // hold : applis retenues (mise a jour en cours, demarrees ensuite)
+        public void StartAutostart(Func<ToolHost, bool> hold = null)
         {
             foreach (var tool in Tools)
-                if (EffectiveAutostart(tool)) tool.Start(userInitiated: false);
+                if (EffectiveAutostart(tool) && hold?.Invoke(tool) != true) tool.Start(userInitiated: false);
         }
 
         // Catalogue d'actions : celui du lancement en cours, sinon le dernier garde (appli arretee), sinon les "pin" du menu (appli v1)

@@ -42,6 +42,36 @@ namespace KKAO.Apps
 
         public string AppDir(string id) => Path.Combine(AppsRoot, id);
 
+        // Dossiers « . » : ignores par l'inventaire des applis
+        public const string PreviousDirName = ".precedent";
+        public const string DownloadsDirName = ".telechargements";
+        public string DownloadsDir => Path.Combine(AppsRoot, DownloadsDirName);
+        // Version remplacee par la derniere mise a jour, gardee pour revenir en arriere
+        public string PreviousDir(string id) => Path.Combine(AppsRoot, PreviousDirName, id);
+        public bool HasPrevious(string id) => File.Exists(Path.Combine(PreviousDir(id), AppManifest.FileName));
+
+        // Retour a la version precedente (l'appli doit etre arretee) ; renvoie son manifeste
+        public AppManifest Rollback(string id)
+        {
+            if (!HasPrevious(id)) throw new InstallException("Aucune version précédente gardée.");
+            var final = AppDir(id);
+            var broken = Path.Combine(AppsRoot, TempPrefix + id + "-retire-" + Guid.NewGuid().ToString("N").Substring(0, 8));
+            try
+            {
+                if (Directory.Exists(final)) Directory.Move(final, broken);
+                Directory.Move(PreviousDir(id), final);
+            }
+            catch (Exception ex) when (ex is IOException || ex is UnauthorizedAccessException)
+            {
+                throw new InstallException("Des fichiers de l'appli sont encore utilisés. Fermez-la, puis réessayez.");
+            }
+            TryDeleteDirectory(broken);
+            return ReadManifest(id);
+        }
+
+        // La nouvelle version a demarre : l'ancienne ne sert plus
+        public void DropPrevious(string id) => TryDeleteDirectory(PreviousDir(id));
+
         public bool IsInstalled(string id) => File.Exists(Path.Combine(AppDir(id), AppManifest.FileName));
 
         // Applis installees : un dossier par appli contenant kkao-app.json (dossiers ".…" = temporaires, ignores)
@@ -109,7 +139,12 @@ namespace KKAO.Apps
             try
             {
                 foreach (var dir in Directory.GetDirectories(AppsRoot, TempPrefix + "*"))
+                {
+                    // Versions precedentes (retour arriere) et paquets deja telecharges : gardes
+                    var name = Path.GetFileName(dir);
+                    if (name == PreviousDirName || name == DownloadsDirName) continue;
                     TryDeleteDirectory(dir);
+                }
             }
             catch (Exception ex)
             {
@@ -118,7 +153,8 @@ namespace KKAO.Apps
         }
 
         // Appel sur un fil de fond. L'appli doit etre arretee (sinon ses fichiers sont verrouilles).
-        public AppManifest Install(string packagePath, string expectedId, string expectedSha256, Action<InstallProgress> progress, CancellationToken token)
+        public AppManifest Install(string packagePath, string expectedId, string expectedSha256, Action<InstallProgress> progress, CancellationToken token,
+            bool keepPrevious = false)
         {
             progress?.Invoke(new InstallProgress("Vérification du paquet…", 0));
             if (string.IsNullOrEmpty(packagePath) || !File.Exists(packagePath))
@@ -181,7 +217,14 @@ namespace KKAO.Apps
                 string old = null;
                 if (Directory.Exists(final))
                 {
-                    old = Path.Combine(AppsRoot, TempPrefix + expectedId + "-ancien-" + Guid.NewGuid().ToString("N").Substring(0, 8));
+                    if (keepPrevious)
+                    {
+                        // Mise a jour : l'ancienne version est gardee pour un retour arriere (une seule par appli)
+                        TryDeleteDirectory(PreviousDir(expectedId));
+                        Directory.CreateDirectory(Path.Combine(AppsRoot, PreviousDirName));
+                    }
+                    old = keepPrevious ? PreviousDir(expectedId)
+                        : Path.Combine(AppsRoot, TempPrefix + expectedId + "-ancien-" + Guid.NewGuid().ToString("N").Substring(0, 8));
                     try
                     {
                         Directory.Move(final, old);
@@ -197,7 +240,7 @@ namespace KKAO.Apps
                 }
                 Directory.Move(temp, final);
                 temp = null;
-                if (old != null) TryDeleteDirectory(old);
+                if (old != null && !keepPrevious) TryDeleteDirectory(old);
                 progress?.Invoke(new InstallProgress("Installée", 1));
                 return manifest;
             }
@@ -211,6 +254,7 @@ namespace KKAO.Apps
         public void Uninstall(string id)
         {
             var dir = AppDir(id);
+            TryDeleteDirectory(PreviousDir(id));
             if (!Directory.Exists(dir)) return;
             var old = Path.Combine(AppsRoot, TempPrefix + id + "-supprime-" + Guid.NewGuid().ToString("N").Substring(0, 8));
             try

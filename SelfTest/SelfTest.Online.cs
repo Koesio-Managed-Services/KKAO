@@ -22,12 +22,13 @@ namespace KKAO
             CheckSelfInstallFromDownload();
         }
 
-        BuiltPackage BuildOnlinePackage(string source, string packages, string id, string version)
+        BuiltPackage BuildOnlinePackage(string source, string packages, string id, string version, bool broken = false)
         {
             var recipe = new BundleRecipe { Id = id, Name = "Appli en ligne", SourceDir = source, VersionRule = version, IconStandIn = "postit", Summary = "Téléchargée" };
             recipe.Include.Add("fake-tool.js");
             recipe.App = new AppManifest { Id = id, Name = "Appli en ligne", Exe = "node", Protocol = true };
-            recipe.App.Args.AddRange(new[] { @".\fake-tool.js", "--id", id, "--v2" });
+            // broken : version qui s'arrete aussitot (script absent)
+            recipe.App.Args.AddRange(broken ? new[] { @".\absent.js" } : new[] { @".\fake-tool.js", "--id", id, "--v2" });
             Directory.CreateDirectory(packages);
             return Bundler.BuildPackage(recipe, packages, null);
         }
@@ -75,6 +76,8 @@ namespace KKAO
             var appsRoot = Path.Combine(root, "apps");
             var installer = new AppInstaller(appsRoot);
             var settings = KkaoSettings.InMemory();
+            // Ici : le parcours a la main (bulle « disponible », bouton « Mettre a jour ») ; l'automatique a son propre test
+            settings.AutoUpdate = false;
             var manager = new ToolManager(new List<ToolConfig>(), settings, SynchronizationContext.Current);
             var layout = new InstallLayout { InstallRoot = Path.Combine(root, "kkao"), StartMenuDir = Path.Combine(root, "menu"), DesktopDir = Path.Combine(root, "bureau") };
             var controller = new Ui.KkaoController(manager, settings, AppCatalog.Empty(), installer, new SelfInstaller(layout, new MemoryRegistry()), false, null,

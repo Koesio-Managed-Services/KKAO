@@ -21,9 +21,18 @@ KKAO vit dans `%LOCALAPPDATA%\Programs\KKAO` (menu Démarrer, Bureau, démarrage
 | **InstruKtion** | Procédures pas à pas : captures annotées, floutage, vidéo, export HTML, PDF, IT Glue |
 | **Kalepin** | Notes rapides rangées par jour dans Paper Dropbox, post-it sur le bureau (un guide fait créer son application Dropbox au premier lancement) |
 
-**Mises à jour** : KKAO consulte la dernière release au démarrage puis toutes les 6 heures. Nouvelle version d'une
-appli : bouton *Mettre à jour* dans *Applications* (et une bulle). Nouvelle version de KKAO : *Réglages > Mises à jour >
-Mettre à jour vers x.y.z* (téléchargement, empreinte vérifiée, redémarrage). Réglages et documents sont conservés.
+**Mises à jour** : KKAO consulte la dernière release au démarrage puis toutes les 6 heures. Depuis la 2.3, elles
+s'installent **automatiquement** (réglage activé par défaut, *Réglages > Mises à jour*). Le téléchargement se fait en
+arrière-plan et l'empreinte est vérifiée.
+
+- **KKAO** est mis à jour en premier. Il redémarre sur sa nouvelle version pendant une pause de 30 min ou au démarrage
+  suivant, puis relance les applis qui tournaient.
+- **Une appli arrêtée** est mise à jour tout de suite.
+- **Une appli ouverte** est mise à jour au démarrage de KKAO, quand elle se ferme, ou pendant une pause de 30 min si elle
+  n'est pas occupée (`status.busy`, enregistrement).
+- **Retour arrière** : si la nouvelle version ne démarre pas, l'ancienne revient et cette version n'est plus retentée.
+
+Sans le réglage, les boutons *Mettre à jour* restent disponibles. Réglages et documents sont conservés.
 
 **Désinstaller** : Paramètres Windows > Applications > KKAO, ou KKAO > Réglages > Désinstaller. Les données
 (réglages `%APPDATA%\KKAO`, documents et réglages des applis) restent.
@@ -92,7 +101,7 @@ publish-github.cmd        :: release GitHub
 | `KKAO.exe --verify-online <rapport.txt> [--catalog <url>]` | Ce que vivra un collègue : téléchargement et installation à blanc |
 | `KKAO.exe --update` | Lancé par KKAO après le téléchargement de sa nouvelle version : se met en place sans question |
 | `KKAO.exe --screenshots <dossier>` | 38 rendus PNG de l'interface (sombre / clair, guide, menu), données de démonstration |
-| `KKAO.exe --selftest <rapport.json> [--tools <fichier>]` | Test automatique sans interface visible (49 vérifications) |
+| `KKAO.exe --selftest <rapport.json> [--tools <fichier>]` | Test automatique sans interface visible (54 vérifications) |
 | `KKAO.exe --uninstall [--quiet]` | Désinstallation |
 | `KKAO.exe --export-icon <fichier.ico>` | Icône de l'exe (`assets\kkao.ico`) |
 
@@ -137,9 +146,10 @@ icônes, fenêtre, versions déjà signalées. `kkao.log` : journal (~1 Mo, jama
 (construction, installation, mise à jour, désinstallation, refus : chemin interdit, mauvais id, empreinte),
 installation de KKAO dans des dossiers temporaires (registre en mémoire), y compris depuis un « KKAO (1).exe » seul ;
 catalogue en ligne simulé : lecture, copie locale, téléchargement puis installation, mise à jour annoncée et installée,
-empreinte fausse refusée, choix entre paquet embarqué et en ligne, préparation de la release ; rendu de toutes les
+empreinte fausse refusée, choix entre paquet embarqué et en ligne, préparation de la release ; mise à jour
+automatique (appli occupée jamais fermée, PC inactif, retour arrière, mise à jour au démarrage) ; rendu de toutes les
 pages et étapes du guide dans les deux thèmes. `--verify-online` après chaque publication.
 
 **Pas encore testé sur un vrai poste** : la fenêtre et le menu à l'écran (DPI 125/150 %), l'auto-installation et la
-relance, la mise à jour de KKAO par lui-même, la désinstallation par Windows, le démarrage avec Windows, les icônes par
+relance, la mise à jour de KKAO par lui-même (à la main et automatique), la désinstallation par Windows, le démarrage avec Windows, les icônes par
 appli, SmartScreen / antivirus sur l'exe non signé, un proxy d'entreprise.

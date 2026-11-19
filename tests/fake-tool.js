@@ -7,7 +7,7 @@
 //   --retry-once [<marqueur>] premier lancement : hello, retry puis code 75 ; ensuite normal (fichier marqueur)
 //   --retry-always           retry + code 75 a chaque lancement
 //   --retry-after <ms>       valeur "after" du retry (500 par defaut)
-// Commandes reconnues : status:<etat>, crash:<code>, closepipe ; toute commande est renvoyee en log "command:<id>".
+// Commandes reconnues : status:<etat>, busy, free (status.busy), crash:<code>, closepipe ; toute commande est renvoyee en log "command:<id>".
 const net = require('net');
 const fs = require('fs');
 const os = require('os');
@@ -179,6 +179,8 @@ connect((sock) => {
       let m;
       if ((m = /^status:(\w+)$/.exec(cid))) {
         send({ type: 'status', state: m[1], tooltip: 'Fake ' + id + ' — ' + m[1] });
+      } else if (cid === 'busy' || cid === 'free') {
+        send({ type: 'status', state: 'active', busy: cid === 'busy', tooltip: 'Fake ' + id + ' — ' + cid });
       } else if ((m = /^crash:(\d+)$/.exec(cid))) {
         exitCode = Number(m[1]);
         stayAfterClose = true;

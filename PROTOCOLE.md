@@ -186,6 +186,15 @@ KKAO affiche « enregistrement… » jusqu'à ce `settings` (3 s au plus).
 L'icône KKAO montre l'état le plus important de toutes les applis : `rec` > `error` > `pause` > `warn` > `active` > `idle`.
 L'icône propre d'une appli **(v2)** montre son état à elle ; son infobulle est `status.tooltip` (63 caractères affichés au plus).
 
+### Occupée : `status.busy` (KKAO 2.3)
+
+`{"type":"status","state":"active","busy":true}` : l'appli **ne doit pas être fermée maintenant**. Par exemple, du travail
+non enregistré, un enregistrement en cours ou un envoi en cours. KKAO ne la ferme alors jamais pour une mise à jour automatique.
+
+- `busy` absent = `false`. L'état `rec` compte toujours comme occupé.
+- L'appli renvoie `status` avec `busy:false` dès que le travail est enregistré.
+- `busy` ne change rien à l'icône ni aux clics. *Arrêter* et *Quitter* restent possibles : c'est l'utilisateur qui décide.
+
 ## KKAO → appli
 
 | Message | Rôle |
@@ -272,6 +281,22 @@ Appels d'une appli à une autre, routés par KKAO : les types `call`, `result`, 
 5. Appli déjà ouverte **hors de KKAO** (instance unique) : la nouvelle instance demande à l'ancienne de se fermer
    (mécanisme propre à l'appli), envoie `hello` puis `retry` (`after` ≈ 3000) et quitte avec le code 75.
 
+## Mises à jour automatiques (KKAO 2.3)
+
+Réglage *Installer les mises à jour automatiquement* (activé par défaut). KKAO télécharge en arrière-plan,
+pendant que l'ancienne version continue de tourner, et vérifie l'empreinte. Ensuite :
+
+1. **KKAO d'abord** : si KKAO a une nouvelle version, les applis attendent qu'il ait redémarré dessus.
+   Au redémarrage, KKAO relance les applis qui tournaient.
+2. **Une appli arrêtée** est mise à jour tout de suite. **Une appli ouverte** l'est dès qu'elle se ferme, au prochain
+   démarrage de KKAO (avant qu'il la lance), ou quand le PC est inactif depuis 30 min et qu'aucune appli n'est `busy`.
+   Elle reçoit alors un `quit` normal, puis elle est relancée.
+3. **Retour arrière** : l'ancienne version est gardée. Si la nouvelle n'envoie pas `hello` dans les 30 s ou s'arrête
+   d'elle-même, KKAO remet l'ancienne et ne retente plus automatiquement cette version.
+
+Pour l'appli, cela demande seulement deux choses : publier `busy` quand il le faut, et accepter un `quit` à tout moment
+où elle n'est pas `busy`.
+
 ## tools.json
 
 À côté de `KKAO.exe` ou dans le dossier parent. Chemins relatifs = relatifs au dossier de `tools.json`
@@ -321,3 +346,4 @@ Appels d'une appli à une autre, routés par KKAO : les types `call`, `result`, 
 8. Gérer ses raccourcis globaux elle-même et les publier dans `actions[].shortcut` (+ `shortcutError`).
 9. Publier ses réglages utiles dans `settings` (jamais de secret), appliquer `setSetting` et republier.
 10. Fonctionner depuis son dossier d'installation (`%LOCALAPPDATA%\Programs\KKAO\apps\<id>\`) sans y écrire.
+11. **(2.3)** Publier `status.busy:true` tant qu'un `quit` ferait perdre quelque chose, puis `busy:false`.

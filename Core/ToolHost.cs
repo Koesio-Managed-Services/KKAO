@@ -102,6 +102,9 @@ namespace KKAO
         public int PendingCommandCount => _pending.Count;
         public StatusState Status { get; private set; }
         public string StatusTooltip { get; private set; }
+        // status.busy (2.3) : ne pas fermer pour une mise a jour automatique ; « rec » compte toujours comme occupe
+        public bool BusyFlag { get; private set; }
+        public bool IsBusy => IsAlive && (BusyFlag || Status == StatusState.Rec);
         // Arret inattendu ou demarrage impossible : pastille rouge jusqu'au prochain demarrage
         public bool Crashed { get; private set; }
         public string CrashSummary { get; private set; }
@@ -727,6 +730,9 @@ namespace KKAO
             if (state != Status) Log.Write("[" + Id + "] etat : " + state.ToString().ToLowerInvariant());
             Status = state;
             StatusTooltip = OneLine(Json.GetString(message, "tooltip"), 200);
+            var busy = Json.GetBool(message, "busy") ?? false;
+            if (busy != BusyFlag) Log.Write("[" + Id + "] " + (busy ? "occupee (pas de mise a jour automatique)" : "plus occupee"));
+            BusyFlag = busy;
             Changed();
         }
 
@@ -922,6 +928,7 @@ namespace KKAO
             Menu = new List<MenuNode>();
             Status = StatusState.Idle;
             StatusTooltip = null;
+            BusyFlag = false;
             _lastMenuSummary = null;
             Actions = new List<ActionNode>();
             HasActionsCatalog = false;

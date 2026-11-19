@@ -12,7 +12,7 @@ namespace KKAO.Ui
 {
     // Ce que la fenetre de KKAO peut faire : installer / desinstaller des applis, les demarrer, regler, menu rapide, missions…
     // Tout est appele sur le fil de l'interface ; les travaux longs (zip) partent sur un fil de fond.
-    internal sealed class KkaoController
+    internal sealed partial class KkaoController
     {
         readonly SynchronizationContext _ui;
         readonly Dictionary<string, InstallState> _installs = new Dictionary<string, InstallState>(StringComparer.OrdinalIgnoreCase);
@@ -33,6 +33,7 @@ namespace KKAO.Ui
             _ui = ui;
             Quick = new QuickMenuService(tools, settings);
             tools.Changed += _ => RaiseChangedSoon();
+            tools.Changed += WatchVerification;
             tools.ToolsChanged += RaiseChanged;
             // Copie installee (ou developpement) : la mission « Installer KKAO » est deja accomplie
             if ((Paths.IsInstalledCopy || devMode) && !settings.QuestDone(Quests.InstallKkao)) settings.CompleteQuest(Quests.InstallKkao);
@@ -70,6 +71,9 @@ namespace KKAO.Ui
             public double Fraction;
             public string Phase;
             public string Error;
+            public bool Auto;
+            // Mise a jour au demarrage de KKAO : l'appli demarre meme si l'installation echoue
+            public bool StartAnyway;
         }
 
         #region Photo pour l'interface
@@ -225,9 +229,20 @@ namespace KKAO.Ui
 
         // id : celui de l'appli du catalogue, ou l'ancien id d'une appli installee avant son renommage (elle est alors remplacee)
         // Paquets telecharges, le temps de l'installation (dossier « . » : ignore par l'inventaire, nettoye au demarrage)
-        string DownloadsDir => Path.Combine(Installer.AppsRoot, ".telechargements");
+        string DownloadsDir => Installer.DownloadsDir;
+        string DownloadPath(CatalogApp app) => Path.Combine(DownloadsDir, app.Id + "-" + (app.Version ?? "0") + ".zip");
 
-        public void InstallApp(string id, bool startAfter)
+        // Paquet deja telecharge (mise a jour automatique preparee en arriere-plan) : l'empreinte est verifiee a l'installation
+        bool IsDownloaded(CatalogApp app)
+        {
+            var file = DownloadPath(app);
+            try { return File.Exists(file) && (app.Size <= 0 || new FileInfo(file).Length == app.Size); }
+            catch (Exception) { return false; }
+        }
+
+        public void InstallApp(string id, bool startAfter) => InstallApp(id, startAfter, auto: false);
+
+        void InstallApp(string id, bool startAfter, bool auto)
         {
             var app = Catalog.Find(id) ?? Catalog.FindByAlias(id);
             if (app == null || !app.CanInstall)
@@ -237,8 +252,10 @@ namespace KKAO.Ui
                 return;
             }
             if (_installs.TryGetValue(id, out var current) && current.Running) return;
-            var state = new InstallState { Running = true, Phase = "Préparation…" };
+            var state = new InstallState { Running = true, Phase = "Préparation…", Auto = auto };
             _installs[id] = state;
+            // Installation demandee a la main : une version ecartee apres un retour arriere peut etre retentee
+            if (!auto) Settings.SetSkippedVersion(app.Id, null);
             RaiseChanged();
 
             if (app.HasPackage)
@@ -246,8 +263,14 @@ namespace KKAO.Ui
                 StopThenInstall(app, app.PackagePath, id, state, startAfter, false, 0);
                 return;
             }
+            var file = DownloadPath(app);
+            if (IsDownloaded(app))
+            {
+                Log.Write("[" + id + "] paquet " + app.Version + " déjà téléchargé : " + file);
+                StopThenInstall(app, file, id, state, startAfter, true, DownloadShare);
+                return;
+            }
             // En ligne : telechargement pendant que l'ancienne version continue de tourner, puis installation
-            var file = Path.Combine(DownloadsDir, app.Id + "-" + (app.Version ?? "0") + ".zip");
             state.Phase = "Téléchargement…";
             Log.Write("[" + id + "] téléchargement de " + app.Name + " " + app.Version + " depuis " + app.Url);
             Task.Run(() => Downloader.DownloadFile(app.Url, file, app.Size, (done, total) => Post(() =>
@@ -277,9 +300,11 @@ namespace KKAO.Ui
         {
             var existing = Tools.Find(id);
             var wasRunning = existing?.IsAlive == true;
+            // Mise a jour sur place : l'ancienne version est gardee pour un retour arriere
+            var update = string.Equals(id, app.Id, StringComparison.OrdinalIgnoreCase) && Installer.IsInstalled(app.Id);
             void Proceed()
             {
-                Log.Write("[" + id + "] installation de " + app.Name + " " + app.Version + " depuis " + package);
+                Log.Write("[" + id + "] installation de " + app.Name + " " + app.Version + " depuis " + package + (state.Auto ? " (mise à jour automatique)" : ""));
                 Task.Run(() =>
                     {
                         try
@@ -289,14 +314,14 @@ namespace KKAO.Ui
                                 state.Fraction = offset + (1 - offset) * p.Fraction;
                                 state.Phase = p.Phase;
                                 RaiseChangedSoon();
-                            }), CancellationToken.None);
+                            }), CancellationToken.None, keepPrevious: update);
                         }
                         finally
                         {
                             if (deleteAfter) Downloader.TryDelete(package);
                         }
                     })
-                    .ContinueWith(task => Post(() => OnInstalled(app, state, task, startAfter || wasRunning, id)));
+                    .ContinueWith(task => Post(() => OnInstalled(app, state, task, startAfter || wasRunning, id, update)));
             }
             if (existing != null && existing.IsAlive)
             {
@@ -315,7 +340,7 @@ namespace KKAO.Ui
             else Proceed();
         }
 
-        void OnInstalled(CatalogApp app, InstallState state, Task<AppManifest> task, bool start, string requestedId)
+        void OnInstalled(CatalogApp app, InstallState state, Task<AppManifest> task, bool start, string requestedId, bool update)
         {
             state.Running = false;
             if (task.IsFaulted)
@@ -342,9 +367,13 @@ namespace KKAO.Ui
                     else Log.Write("[" + requestedId + "] ancienne installation supprimée (remplacée par " + app.Id + ")");
                 });
             }
+            // Mise a jour : verifiee au prochain demarrage de l'appli (retour arriere si elle ne demarre pas)
+            if (update && config.Protocol) Settings.SetVerifyPending(app.Id, app.Version);
+            else if (update) Installer.DropPrevious(app.Id);
             CompleteQuest(Quests.InstallApp);
-            Message?.Invoke(tool.Name + " est installée", string.IsNullOrEmpty(app.Summary) ? "Elle apparaît dans vos applis." : app.Summary, false);
-            if (start) tool.Start(userInitiated: true);
+            if (state.Auto) Message?.Invoke(tool.Name + " " + app.Version + " est installée", "Mise à jour automatique : vos réglages et vos documents sont conservés.", false);
+            else Message?.Invoke(tool.Name + " est installée", string.IsNullOrEmpty(app.Summary) ? "Elle apparaît dans vos applis." : app.Summary, false);
+            if (start) tool.Start(userInitiated: !state.Auto);
             RaiseChanged();
         }
 
@@ -352,7 +381,14 @@ namespace KKAO.Ui
         {
             state.Running = false;
             state.Error = message;
-            Message?.Invoke("Installation impossible", message, true);
+            if (state.Auto)
+            {
+                // Mise a jour automatique : pas de bulle, nouvel essai plus tard
+                PostponeRetry(id);
+                Log.Write("[" + id + "] mise à jour automatique impossible : " + message);
+            }
+            else Message?.Invoke("Installation impossible", message, true);
+            if (state.StartAnyway) Tools.Find(id)?.Start(userInitiated: false);
             RaiseChanged();
         }
 
@@ -607,18 +643,21 @@ namespace KKAO.Ui
                 }
                 Remote.Apply(task.Result);
                 Catalog = AppCatalog.Merge(LocalCatalog, Remote.Catalog);
+                PruneDownloads();
                 var updates = Snapshot().Where(a => a.UpdateAvailable).ToList();
                 var kkao = KkaoUpdate;
                 Log.Write("Catalogue en ligne : " + string.Join(", ", Remote.Catalog.Apps.Select(a => a.Name + " " + a.Version))
                     + (Remote.Kkao != null ? " ; " + Branding.Name + " " + Remote.Kkao.Version : "")
                     + (updates.Count > 0 ? " ; à mettre à jour : " + string.Join(", ", updates.Select(a => a.Name)) : ""));
-                if (kkao != null && (userInitiated || Settings.MarkUpdateNotified("kkao", kkao.Version)))
+                var silent = !userInitiated && Settings.AutoUpdate;
+                if (kkao != null && !silent && (userInitiated || Settings.MarkUpdateNotified("kkao", kkao.Version)))
                     Message?.Invoke(Branding.Name + " " + kkao.Version + " est disponible", "Réglages > Mises à jour : un clic suffit, vos réglages et vos applis sont conservés.", false);
-                foreach (var app in updates.Where(a => userInitiated || Settings.MarkUpdateNotified(a.Id, a.AvailableVersion)))
+                foreach (var app in updates.Where(a => !silent && (userInitiated || Settings.MarkUpdateNotified(a.Id, a.AvailableVersion))))
                     Message?.Invoke(app.Name + " " + app.AvailableVersion + " est disponible", "Applications > " + app.Name + " > Mettre à jour.", false);
                 if (userInitiated && kkao == null && updates.Count == 0)
                     Message?.Invoke("Tout est à jour", Branding.Name + " " + Program.Version + " et vos applis sont dans leur dernière version.", false);
                 RaiseChanged();
+                AutoUpdateTick();
             }));
         }
 
@@ -642,23 +681,14 @@ namespace KKAO.Ui
             _kkaoUpdateFraction = 0;
             _kkaoUpdatePhase = "Téléchargement…";
             RaiseChanged();
-            var exe = Path.Combine(UpdateDir, release.Version, Self.ExeName);
+            var exe = KkaoUpdateExe(release);
             Log.Write("Mise à jour de " + Branding.Name + " vers " + release.Version + " depuis " + release.Url);
-            Task.Run(() =>
+            DownloadKkao(release, (done, total) => Post(() =>
             {
-                Downloader.DownloadFile(release.Url, exe, release.Size, (done, total) => Post(() =>
-                {
-                    _kkaoUpdateFraction = total > 0 ? 0.95 * done / total : 0;
-                    _kkaoUpdatePhase = "Téléchargement… " + Bundler.FormatSize(done) + (total > 0 ? " sur " + Bundler.FormatSize(total) : "");
-                    RaiseChangedSoon();
-                }), CancellationToken.None);
-                var sha = AppInstaller.Sha256Of(exe, null, CancellationToken.None);
-                if (!string.Equals(sha, release.Sha256, StringComparison.OrdinalIgnoreCase))
-                {
-                    Downloader.TryDelete(exe);
-                    throw new InstallException("le fichier reçu ne correspond pas à celui publié (empreinte différente) : mise à jour annulée");
-                }
-            }).ContinueWith(task => Post(() =>
+                _kkaoUpdateFraction = total > 0 ? 0.95 * done / total : 0;
+                _kkaoUpdatePhase = "Téléchargement… " + Bundler.FormatSize(done) + (total > 0 ? " sur " + Bundler.FormatSize(total) : "");
+                RaiseChangedSoon();
+            })).ContinueWith(task => Post(() =>
             {
                 if (task.IsFaulted)
                 {
@@ -675,6 +705,33 @@ namespace KKAO.Ui
                 Log.Write("Nouvelle version prête (empreinte vérifiée) : " + exe);
                 RelaunchRequest?.Invoke(exe, "--update");
             }));
+        }
+
+        string KkaoUpdateExe(KkaoRelease release) => Path.Combine(UpdateDir, release.Version, Self.ExeName);
+
+        // Telechargement de la nouvelle version de KKAO (deja la et intacte : rien a faire), empreinte verifiee
+        Task DownloadKkao(KkaoRelease release, Action<long, long> progress) => Task.Run(() =>
+        {
+            if (IsKkaoDownloaded(release)) return;
+            var exe = KkaoUpdateExe(release);
+            Downloader.DownloadFile(release.Url, exe, release.Size, progress, CancellationToken.None);
+            var sha = AppInstaller.Sha256Of(exe, null, CancellationToken.None);
+            if (!string.Equals(sha, release.Sha256, StringComparison.OrdinalIgnoreCase))
+            {
+                Downloader.TryDelete(exe);
+                throw new InstallException("le fichier reçu ne correspond pas à celui publié (empreinte différente) : mise à jour annulée");
+            }
+        });
+
+        bool IsKkaoDownloaded(KkaoRelease release)
+        {
+            var exe = KkaoUpdateExe(release);
+            try
+            {
+                return File.Exists(exe) && (release.Size <= 0 || new FileInfo(exe).Length == release.Size)
+                    && string.Equals(AppInstaller.Sha256Of(exe, null, CancellationToken.None), release.Sha256, StringComparison.OrdinalIgnoreCase);
+            }
+            catch (Exception) { return false; }
         }
 
         #endregion
